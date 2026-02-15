@@ -1,0 +1,16 @@
+export type AppSettings = {
+  id: number;
+  now_playing_title: string | null;
+  now_playing_artist: string | null;
+  spotify_embed_url: string | null;
+  quote_of_day: string | null;
+  latest_article_url: string | null;
+  updated_at: string;
+};
+
+export type CarouselImage = {
+  id: string;
+  storage_path: string;
+  sort_order: number;
+  created_at: string;
+};
