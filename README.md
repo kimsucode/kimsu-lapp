@@ -15,19 +15,35 @@ Mini web-app mobile-first (PWA) avec une home publique et un admin privé.
 - Carousel d'images (jusqu'à 10)
 - Phrase du jour
 - Extrait du dernier article (auto via flux RSS/Atom ou fallback manuel)
+- Sauvegarde instantanée d'un "moment du jour" (rituel quotidien)
+- Toggle ♡ pour sauvegarder/retirer la phrase du jour
+
+- Archive `/archive`
+- Liste des moments sauvegardés (du plus récent au plus ancien)
+- Détail d'un moment `/archive/[id]`
+
+- Saved `/saved`
+- Liste des phrases sauvegardées
+- Retrait d'une phrase en un tap
 
 - Admin `/admin`
 - Login par mot de passe simple
 - Mise à jour contenu Home
 - Réorganisation de l'ordre des sections de la home
 - Upload/suppression images carousel
+- Bouton admin pour rafraîchir manuellement le flux éditorial
 
 ## Structure
 
 - `app/page.tsx`: home publique
+- `app/archive/page.tsx`: archive des moments
+- `app/archive/[id]/page.tsx`: détail d'un moment
+- `app/saved/page.tsx`: phrases sauvegardées
 - `app/admin/login/page.tsx`: login admin
 - `app/admin/page.tsx`: dashboard admin
 - `app/api/admin/*`: endpoints admin
+- `app/api/moments/*`: endpoints moments
+- `app/api/phrases/*`: endpoints phrases sauvegardées
 - `app/api/revalidate/editorial`: webhook de refresh immédiat feed
 - `components/*`: composants UI
 - `lib/*`: auth, data, supabase
@@ -63,7 +79,10 @@ npm install
 
 - Ouvrir Supabase SQL Editor
 - Exécuter `supabase/schema.sql`
-- Si la DB existe déjà, exécuter aussi `supabase/migrations/002_add_section_order.sql` puis `supabase/migrations/003_add_editorial_feed.sql`
+- Si la DB existe déjà, exécuter aussi:
+  - `supabase/migrations/002_add_section_order.sql`
+  - `supabase/migrations/003_add_editorial_feed.sql`
+  - `supabase/migrations/004_add_moments_and_saved_phrases.sql`
 
 3. Lancer l'app
 
@@ -74,26 +93,25 @@ npm run dev
 4. Ouvrir:
 
 - Home: `http://localhost:3000`
+- Archive: `http://localhost:3000/archive`
+- Saved: `http://localhost:3000/saved`
 - Admin: `http://localhost:3000/admin`
 
-## Déploiement Vercel
+## API endpoints
 
-1. Push du repo Git
-2. Import projet dans Vercel
-3. Ajouter toutes les variables d'environnement
-4. Redéployer
+- `POST /api/moments/save-today`
+- `GET /api/moments`
+- `GET /api/moments/[id]`
+- `POST /api/phrases/toggle`
+- `GET /api/phrases`
 
-## Notes de sécurité MVP
+## Usage (Rituel quotidien)
 
-- Auth admin par mot de passe unique + cookie httpOnly signé
-- Pour la phase suivante: migrer vers Supabase Auth (users/roles)
-
-## Check rapide de validation
-
-- Home affiche les 4 sections
-- `/admin` redirige vers `/admin/login` si non connecté
-- Update settings admin reflété sur Home
-- Upload image visible dans carousel
+1. Depuis la Home, appuie sur `Sauvegarder ce moment`.
+   - L'app enregistre automatiquement la date du jour (Europe/Paris), now playing, phrase du jour, cover (1re image du carousel si dispo) et URL article.
+2. Consulte `/archive` pour retrouver tous tes moments.
+3. Appuie sur `♡` dans la phrase du jour pour la sauvegarder/retirer.
+4. Consulte `/saved` pour gérer toutes les phrases sauvegardées.
 
 ## Flux éditorial auto (publication -> refresh)
 
@@ -111,3 +129,15 @@ https://ton-domaine.com/api/revalidate/editorial?secret=TON_SECRET
 ```
 
 Tu peux aussi envoyer le secret dans le header `x-webhook-secret`.
+
+## Déploiement Vercel
+
+1. Push du repo Git
+2. Import projet dans Vercel
+3. Ajouter toutes les variables d'environnement
+4. Redéployer
+
+## Notes de sécurité MVP
+
+- Auth admin par mot de passe unique + cookie httpOnly signé
+- Pour la phase suivante: migrer vers Supabase Auth (users/roles)

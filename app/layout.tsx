@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Manrope, Space_Grotesk } from "next/font/google";
 
+import { BottomNav } from "@/components/navigation/BottomNav";
+
 import "./globals.css";
 
 const bodyFont = Manrope({
@@ -26,7 +28,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr">
-      <body className={`${bodyFont.variable} ${headingFont.variable}`}>{children}</body>
+      <body className={`${bodyFont.variable} ${headingFont.variable} pb-24`}>
+        {children}
+        <BottomNav />
+      </body>
     </html>
   );
 }

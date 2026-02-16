@@ -3,9 +3,10 @@ import { EditorialBlock } from "@/components/home/EditorialBlock";
 import { Footer } from "@/components/home/Footer";
 import { Header } from "@/components/home/Header";
 import { NowPlaying } from "@/components/home/NowPlaying";
+import { QuoteActions } from "@/components/home/QuoteActions";
 import { QuoteOfTheDay } from "@/components/home/QuoteOfTheDay";
 import { getArticlePreview } from "@/lib/article-preview";
-import { getAppSettings, getCarouselImages, getPublicImageUrl } from "@/lib/data";
+import { getAppSettings, getCarouselImages, getPublicImageUrl, isPhraseSaved } from "@/lib/data";
 import { getLatestPostFromFeed } from "@/lib/editorial-feed";
 
 function buildFallbackExcerpt(title: string | null): string {
@@ -23,6 +24,9 @@ export default async function HomePage() {
     id: image.id,
     url: getPublicImageUrl(image.storage_path)
   }));
+
+  const currentPhrase = settings?.quote_of_day?.trim() ?? null;
+  const initialPhraseSaved = currentPhrase ? await isPhraseSaved(currentPhrase) : false;
 
   const feedPost = await getLatestPostFromFeed(settings?.editorial_feed_url ?? null);
   const articleUrl = feedPost?.url ?? settings?.latest_article_url ?? null;
@@ -52,7 +56,10 @@ export default async function HomePage() {
           spotifyEmbedUrl={settings?.spotify_embed_url ?? null}
         />
 
-        <QuoteOfTheDay quote={settings?.quote_of_day ?? null} />
+        <QuoteOfTheDay
+          quote={settings?.quote_of_day ?? null}
+          actions={<QuoteActions phrase={settings?.quote_of_day ?? null} initialSaved={initialPhraseSaved} />}
+        />
 
         <Carousel images={imageUrls} />
 
