@@ -5,10 +5,7 @@ type Props = {
 export function QuoteCard({ quote }: Props) {
   return (
     <section className="card quote-card">
-      <div className="quote-title-row">
-        <h2 className="section-title" style={{ marginBottom: 0 }}>
-          Phrase du jour
-        </h2>
+      <div className="quote-title-row" style={{ justifyContent: "flex-end" }}>
         <span className="quote-title-badge">Phrase du jour</span>
       </div>
 
