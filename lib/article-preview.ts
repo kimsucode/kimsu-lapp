@@ -1,5 +1,7 @@
 import "server-only";
 
+import { truncateSmart } from "@/lib/excerpt";
+
 type ArticlePreview = {
   title: string | null;
   excerpt: string | null;
@@ -92,7 +94,7 @@ export async function getArticlePreview(url: string | null): Promise<ArticlePrev
 
     return {
       title,
-      excerpt: excerpt ? excerpt.slice(0, 280) : null
+      excerpt: excerpt ? truncateSmart(excerpt, 360) : null
     };
   } catch {
     return { title: null, excerpt: null };

@@ -1,5 +1,7 @@
 import "server-only";
 
+import { truncateSmart } from "@/lib/excerpt";
+
 export type EditorialPost = {
   title: string | null;
   url: string | null;
@@ -62,7 +64,7 @@ function extractRssItem(xml: string): EditorialPost | null {
   return {
     title: getTagContent(item, "title"),
     url: getTagContent(item, "link"),
-    excerpt: excerpt?.slice(0, 320) ?? null,
+    excerpt: excerpt ? truncateSmart(excerpt, 360) : null,
     publishedAt: getTagContent(item, "pubDate")
   };
 }
@@ -72,10 +74,12 @@ function extractAtomEntry(xml: string): EditorialPost | null {
   if (!entryMatch?.[0]) return null;
   const entry = entryMatch[0];
 
+  const excerpt = getFirstTagContent(entry, ["summary", "content"]);
+
   return {
     title: getTagContent(entry, "title"),
     url: getLinkFromAtomEntry(entry),
-    excerpt: getFirstTagContent(entry, ["summary", "content"])?.slice(0, 320) ?? null,
+    excerpt: excerpt ? truncateSmart(excerpt, 360) : null,
     publishedAt: getTagContent(entry, "published") ?? getTagContent(entry, "updated")
   };
 }

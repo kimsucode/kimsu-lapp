@@ -45,7 +45,14 @@ export default async function HomePage() {
     ),
     carousel: <ImageCarousel images={imageUrls} />,
     quote: <QuoteCard quote={settings?.quote_of_day ?? null} />,
-    latest_article: <LatestArticleCard url={articleUrl} title={previewTitle} excerpt={previewExcerpt} />
+    latest_article: (
+      <LatestArticleCard
+        url={articleUrl}
+        title={previewTitle}
+        excerpt={previewExcerpt}
+        publishedAt={feedPost?.publishedAt ?? null}
+      />
+    )
   };
 
   const orderedSections = normalizeHomeSectionOrder(settings?.section_order);
