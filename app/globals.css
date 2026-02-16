@@ -197,3 +197,136 @@ label {
     transform: translateY(0);
   }
 }
+
+.theme-preview {
+  --pv-bg: #f4f1ea;
+  --pv-surface: #fffdf8;
+  --pv-text: #1f1f1f;
+  --pv-muted: #6b665c;
+  --pv-accent: #c55f3d;
+  --pv-border: #ddd3c4;
+
+  min-height: 100vh;
+  width: min(760px, 100%);
+  margin: 0 auto;
+  padding: 24px 16px 36px;
+  display: grid;
+  gap: 14px;
+  background: var(--pv-bg);
+  color: var(--pv-text);
+}
+
+.theme-preview.theme-editorial {
+  --pv-bg: #f3f1ec;
+  --pv-surface: #fffefb;
+  --pv-text: #151515;
+  --pv-muted: #525252;
+  --pv-accent: #111111;
+  --pv-border: #cbc7bd;
+}
+
+.theme-preview.theme-minimal-pop {
+  --pv-bg: #f6fbff;
+  --pv-surface: #ffffff;
+  --pv-text: #0f1722;
+  --pv-muted: #42536a;
+  --pv-accent: #1073ff;
+  --pv-border: #c9def9;
+}
+
+.preview-toolbar,
+.preview-card {
+  background: var(--pv-surface);
+  border: 1px solid var(--pv-border);
+  border-radius: 16px;
+  padding: 14px;
+}
+
+.preview-toolbar {
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.06);
+}
+
+.preview-title {
+  margin: 0 0 6px;
+  font-family: var(--font-heading), sans-serif;
+  font-size: 1.4rem;
+}
+
+.preview-subtitle,
+.preview-description,
+.preview-muted {
+  margin: 0;
+  color: var(--pv-muted);
+}
+
+.preview-description {
+  margin-top: 8px;
+}
+
+.preview-tabs {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.preview-tab {
+  border: 1px solid var(--pv-border);
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: #fff;
+  color: var(--pv-text);
+}
+
+.preview-tab.active {
+  background: var(--pv-accent);
+  color: #fff;
+  border-color: var(--pv-accent);
+}
+
+.preview-kicker {
+  margin: 0 0 6px;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--pv-muted);
+}
+
+.preview-h2 {
+  margin: 0 0 4px;
+  font-family: var(--font-heading), sans-serif;
+}
+
+.preview-body {
+  margin: 10px 0 0;
+  line-height: 1.6;
+}
+
+.preview-quote {
+  border-color: color-mix(in srgb, var(--pv-accent) 35%, var(--pv-border));
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--pv-accent) 10%, #fff) 0%,
+    color-mix(in srgb, var(--pv-accent) 16%, #fff) 100%
+  );
+}
+
+.preview-badge {
+  display: inline-block;
+  margin: 0 0 8px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: #fff;
+  border: 1px solid color-mix(in srgb, var(--pv-accent) 35%, #fff);
+  color: color-mix(in srgb, var(--pv-accent) 80%, #000);
+}
+
+.preview-quote-text {
+  margin: 0;
+  font-size: 1.12rem;
+  font-weight: 700;
+  line-height: 1.65;
+}
