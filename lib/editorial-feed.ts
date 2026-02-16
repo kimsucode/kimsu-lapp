@@ -31,6 +31,14 @@ function getTagContent(xml: string, tagName: string): string | null {
   return match?.[1] ? cleanText(match[1]) : null;
 }
 
+function getFirstTagContent(xml: string, tagNames: string[]): string | null {
+  for (const tagName of tagNames) {
+    const value = getTagContent(xml, tagName);
+    if (value) return value;
+  }
+  return null;
+}
+
 function getLinkFromAtomEntry(entryXml: string): string | null {
   const links = [...entryXml.matchAll(/<link\b([^>]*)>/gi)];
   for (const link of links) {
@@ -49,10 +57,12 @@ function extractRssItem(xml: string): EditorialPost | null {
   if (!itemMatch?.[0]) return null;
   const item = itemMatch[0];
 
+  const excerpt = getFirstTagContent(item, ["description", "content:encoded", "content"]);
+
   return {
     title: getTagContent(item, "title"),
     url: getTagContent(item, "link"),
-    excerpt: getTagContent(item, "description")?.slice(0, 320) ?? null,
+    excerpt: excerpt?.slice(0, 320) ?? null,
     publishedAt: getTagContent(item, "pubDate")
   };
 }
@@ -65,7 +75,7 @@ function extractAtomEntry(xml: string): EditorialPost | null {
   return {
     title: getTagContent(entry, "title"),
     url: getLinkFromAtomEntry(entry),
-    excerpt: (getTagContent(entry, "summary") ?? getTagContent(entry, "content"))?.slice(0, 320) ?? null,
+    excerpt: getFirstTagContent(entry, ["summary", "content"])?.slice(0, 320) ?? null,
     publishedAt: getTagContent(entry, "published") ?? getTagContent(entry, "updated")
   };
 }

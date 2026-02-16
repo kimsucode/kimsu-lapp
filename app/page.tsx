@@ -10,6 +10,13 @@ import { getLatestPostFromFeed } from "@/lib/editorial-feed";
 import { normalizeHomeSectionOrder } from "@/lib/sections";
 import type { HomeSectionKey } from "@/types/content";
 
+function buildFallbackExcerpt(title: string | null): string {
+  if (title) {
+    return `Nouveau sur le blog: ${title}.`;
+  }
+  return "Nouveau contenu disponible sur le blog.";
+}
+
 export default async function HomePage() {
   const [settings, images] = await Promise.all([getAppSettings(), getCarouselImages()]);
 
@@ -25,6 +32,9 @@ export default async function HomePage() {
     ? { title: feedPost.title, excerpt: feedPost.excerpt }
     : await getArticlePreview(articleUrl);
 
+  const previewTitle = feedPost?.title ?? articlePreview.title;
+  const previewExcerpt = feedPost?.excerpt ?? articlePreview.excerpt ?? buildFallbackExcerpt(previewTitle);
+
   const sections: Record<HomeSectionKey, ReactNode> = {
     now_playing: (
       <NowPlayingCard
@@ -35,13 +45,7 @@ export default async function HomePage() {
     ),
     carousel: <ImageCarousel images={imageUrls} />,
     quote: <QuoteCard quote={settings?.quote_of_day ?? null} />,
-    latest_article: (
-      <LatestArticleCard
-        url={articleUrl}
-        title={feedPost?.title ?? articlePreview.title}
-        excerpt={feedPost?.excerpt ?? articlePreview.excerpt}
-      />
-    )
+    latest_article: <LatestArticleCard url={articleUrl} title={previewTitle} excerpt={previewExcerpt} />
   };
 
   const orderedSections = normalizeHomeSectionOrder(settings?.section_order);
