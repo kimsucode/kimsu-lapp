@@ -38,11 +38,16 @@ const config: Config = {
         pulseSoft: {
           "0%, 100%": { opacity: "0.45", transform: "scale(1)" },
           "50%": { opacity: "1", transform: "scale(1.06)" }
+        },
+        music: {
+          "0%, 100%": { transform: "translateY(0) scale(1)", opacity: "0.95" },
+          "50%": { transform: "translateY(-2px) scale(1.03)", opacity: "1" }
         }
       },
       animation: {
         fadeCalm: "fadeCalm 320ms cubic-bezier(0.22, 1, 0.36, 1) both",
-        pulseSoft: "pulseSoft 3s ease-in-out infinite"
+        pulseSoft: "pulseSoft 3s ease-in-out infinite",
+        music: "music 2.8s ease-in-out infinite"
       }
     }
   },

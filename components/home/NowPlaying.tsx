@@ -1,3 +1,5 @@
+import MusicWave from "@/components/home/MusicWave";
+
 type Props = {
   title: string | null;
   artist: string | null;
@@ -10,7 +12,7 @@ export function NowPlaying({ title, artist, spotifyEmbedUrl }: Props) {
       <p className="text-[11px] uppercase tracking-[0.15em] text-textMuted">Now playing</p>
 
       <div className="mt-3 flex items-center gap-3">
-        <div className="h-12 w-12 shrink-0 rounded-xl border border-lavender/30 bg-gradient-to-br from-lavender/30 via-rose/20 to-peach/20" />
+        <MusicWave isPlaying={Boolean(spotifyEmbedUrl)} />
 
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium text-textPrimary">{title || "Titre à définir"}</p>
