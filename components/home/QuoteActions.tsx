@@ -11,7 +11,6 @@ export function QuoteActions({ phrase, initialSaved }: Props) {
   const [saved, setSaved] = useState(initialSaved);
   const [status, setStatus] = useState<string | null>(null);
   const [isToggling, setIsToggling] = useState(false);
-  const [isSavingMoment, setIsSavingMoment] = useState(false);
 
   async function togglePhrase() {
     if (!phrase?.trim()) {
@@ -39,23 +38,6 @@ export function QuoteActions({ phrase, initialSaved }: Props) {
     setStatus(payload.saved ? "Phrase sauvegardée ♡" : "Phrase retirée");
   }
 
-  async function saveMoment() {
-    setIsSavingMoment(true);
-
-    const response = await fetch("/api/moments/save-today", {
-      method: "POST"
-    });
-
-    setIsSavingMoment(false);
-
-    if (!response.ok) {
-      setStatus("Impossible de sauvegarder ce moment.");
-      return;
-    }
-
-    setStatus("Enregistré ✓");
-  }
-
   return (
     <div className="mt-8 flex flex-col items-center gap-3">
       <button
@@ -69,15 +51,6 @@ export function QuoteActions({ phrase, initialSaved }: Props) {
         aria-label="Sauvegarder la phrase"
       >
         ♡
-      </button>
-
-      <button
-        type="button"
-        onClick={saveMoment}
-        disabled={isSavingMoment}
-        className="rounded-full border border-lavender/45 bg-lavender/20 px-5 py-2.5 text-sm font-medium text-lavender transition-colors duration-300 ease-calm hover:bg-lavender/30"
-      >
-        {isSavingMoment ? "Sauvegarde..." : "Sauvegarder ce moment"}
       </button>
 
       {status ? <p className="text-sm text-textSecondary">{status}</p> : null}
