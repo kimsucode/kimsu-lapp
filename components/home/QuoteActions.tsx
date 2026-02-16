@@ -45,12 +45,12 @@ export function QuoteActions({ phrase, initialSaved }: Props) {
         onClick={togglePhrase}
         disabled={isToggling}
         className={saved
-          ? "inline-flex h-10 w-10 items-center justify-center rounded-full border border-lavender/40 bg-lavender/15 text-xl text-lavender transition-colors duration-300 ease-calm"
-          : "inline-flex h-10 w-10 items-center justify-center rounded-full border border-borderSubtle bg-[#191922] text-xl text-textSecondary transition-colors duration-300 ease-calm hover:text-lavender"
+          ? "inline-flex h-11 w-11 items-center justify-center rounded-full border border-lavender/60 bg-lavender/30 text-xl text-lavender shadow-[0_0_14px_rgba(205,189,255,0.24)] transition-colors duration-300 ease-calm"
+          : "inline-flex h-11 w-11 items-center justify-center rounded-full border border-borderSubtle bg-[#191922] text-xl text-textSecondary transition-colors duration-300 ease-calm hover:border-lavender/35 hover:text-lavender"
         }
-        aria-label="Sauvegarder la phrase"
+        aria-label={saved ? "Phrase aimée" : "Aimer la phrase"}
       >
-        ♡
+        {saved ? "♥" : "♡"}
       </button>
 
       {status ? <p className="text-sm text-textSecondary">{status}</p> : null}
