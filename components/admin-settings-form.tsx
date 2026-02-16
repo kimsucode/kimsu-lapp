@@ -46,6 +46,7 @@ export function AdminSettingsForm({ initialValues }: Props) {
   });
   const [message, setMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isRefreshingFeed, setIsRefreshingFeed] = useState(false);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -67,6 +68,24 @@ export function AdminSettingsForm({ initialValues }: Props) {
 
     setIsLoading(false);
     setMessage("Contenu mis à jour.");
+  }
+
+  async function onRefreshFeed() {
+    setIsRefreshingFeed(true);
+    setMessage(null);
+
+    const response = await fetch("/api/admin/editorial/refresh", {
+      method: "POST"
+    });
+
+    if (!response.ok) {
+      setMessage("Impossible de rafraîchir le flux.");
+      setIsRefreshingFeed(false);
+      return;
+    }
+
+    setMessage("Flux éditorial rafraîchi. Recharge la home pour voir la mise à jour.");
+    setIsRefreshingFeed(false);
   }
 
   return (
@@ -132,6 +151,16 @@ export function AdminSettingsForm({ initialValues }: Props) {
             value={values.editorial_feed_url}
             onChange={(event) => setValues((v) => ({ ...v, editorial_feed_url: event.target.value }))}
           />
+          <div style={{ marginTop: 8 }}>
+            <button
+              type="button"
+              className="secondary"
+              onClick={onRefreshFeed}
+              disabled={isRefreshingFeed}
+            >
+              {isRefreshingFeed ? "Rafraîchissement..." : "Rafraîchir le flux éditorial"}
+            </button>
+          </div>
         </div>
 
         <div className="form-group">
