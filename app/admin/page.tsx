@@ -1,6 +1,7 @@
 import { AdminCarouselManager } from "@/components/admin-carousel-manager";
 import { AdminSettingsForm } from "@/components/admin-settings-form";
 import { getAppSettings, getCarouselImages, getPublicImageUrl } from "@/lib/data";
+import { normalizeHomeSectionOrder } from "@/lib/sections";
 
 export default async function AdminPage() {
   const [settings, images] = await Promise.all([getAppSettings(), getCarouselImages()]);
@@ -23,7 +24,8 @@ export default async function AdminPage() {
             now_playing_artist: settings?.now_playing_artist ?? "",
             spotify_embed_url: settings?.spotify_embed_url ?? "",
             quote_of_day: settings?.quote_of_day ?? "",
-            latest_article_url: settings?.latest_article_url ?? ""
+            latest_article_url: settings?.latest_article_url ?? "",
+            section_order: normalizeHomeSectionOrder(settings?.section_order)
           }}
         />
 

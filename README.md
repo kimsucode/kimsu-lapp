@@ -19,6 +19,7 @@ Mini web-app mobile-first (PWA) avec une home publique et un admin privé.
 - Admin `/admin`
 - Login par mot de passe simple
 - Mise à jour contenu Home
+- Réorganisation de l'ordre des sections de la home
 - Upload/suppression images carousel
 
 ## Structure
@@ -60,6 +61,7 @@ npm install
 
 - Ouvrir Supabase SQL Editor
 - Exécuter `supabase/schema.sql`
+- Si la DB existe déjà, exécuter aussi `supabase/migrations/002_add_section_order.sql`
 
 3. Lancer l'app
 

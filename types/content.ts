@@ -1,3 +1,5 @@
+export type HomeSectionKey = "now_playing" | "carousel" | "quote" | "latest_article";
+
 export type AppSettings = {
   id: number;
   now_playing_title: string | null;
@@ -5,6 +7,7 @@ export type AppSettings = {
   spotify_embed_url: string | null;
   quote_of_day: string | null;
   latest_article_url: string | null;
+  section_order: HomeSectionKey[] | null;
   updated_at: string;
 };
 

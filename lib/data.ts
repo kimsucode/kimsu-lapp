@@ -6,7 +6,9 @@ export async function getAppSettings(): Promise<AppSettings | null> {
 
   const { data, error } = await supabase
     .from("app_settings")
-    .select("id, now_playing_title, now_playing_artist, spotify_embed_url, quote_of_day, latest_article_url, updated_at")
+    .select(
+      "id, now_playing_title, now_playing_artist, spotify_embed_url, quote_of_day, latest_article_url, section_order, updated_at"
+    )
     .eq("id", 1)
     .maybeSingle();
 
