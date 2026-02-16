@@ -1,19 +1,18 @@
-import type { ReactNode } from "react";
-
-import { ImageCarousel } from "@/components/image-carousel";
-import { LatestArticleCard } from "@/components/latest-article-card";
-import { NowPlayingCard } from "@/components/now-playing-card";
-import { QuoteCard } from "@/components/quote-card";
+import { Carousel } from "@/components/home/Carousel";
+import { EditorialBlock } from "@/components/home/EditorialBlock";
+import { Footer } from "@/components/home/Footer";
+import { Header } from "@/components/home/Header";
+import { NowPlaying } from "@/components/home/NowPlaying";
+import { QuoteOfTheDay } from "@/components/home/QuoteOfTheDay";
 import { getArticlePreview } from "@/lib/article-preview";
 import { getAppSettings, getCarouselImages, getPublicImageUrl } from "@/lib/data";
 import { getLatestPostFromFeed } from "@/lib/editorial-feed";
-import { normalizeHomeSectionOrder } from "@/lib/sections";
-import type { HomeSectionKey } from "@/types/content";
 
 function buildFallbackExcerpt(title: string | null): string {
   if (title) {
     return `Nouveau sur le blog: ${title}.`;
   }
+
   return "Nouveau contenu disponible sur le blog.";
 }
 
@@ -36,28 +35,37 @@ export default async function HomePage() {
   const previewExcerpt = feedPost?.excerpt ?? articlePreview.excerpt ?? buildFallbackExcerpt(previewTitle);
   const previewAuthor = feedPost?.author ?? articlePreview.author;
 
-  const sections: Record<HomeSectionKey, ReactNode> = {
-    now_playing: (
-      <NowPlayingCard
-        title={settings?.now_playing_title ?? null}
-        artist={settings?.now_playing_artist ?? null}
-        spotifyEmbedUrl={settings?.spotify_embed_url ?? null}
-      />
-    ),
-    carousel: <ImageCarousel images={imageUrls} />,
-    quote: <QuoteCard quote={settings?.quote_of_day ?? null} />,
-    latest_article: (
-      <LatestArticleCard
-        url={articleUrl}
-        title={previewTitle}
-        excerpt={previewExcerpt}
-        publishedAt={feedPost?.publishedAt ?? null}
-        author={previewAuthor}
-      />
-    )
-  };
+  const dateLabel = new Intl.DateTimeFormat("fr-FR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long"
+  }).format(new Date());
 
-  const orderedSections = normalizeHomeSectionOrder(settings?.section_order);
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-[#2B2139] via-plum to-[#181320] px-4 pb-10 pt-6 text-textPrimary">
+      <div className="mx-auto flex w-full max-w-[460px] flex-col gap-7">
+        <Header appName="Kimsu Lab" dateLabel={dateLabel} />
 
-  return <main>{orderedSections.map((key) => <div key={key}>{sections[key]}</div>)}</main>;
+        <NowPlaying
+          title={settings?.now_playing_title ?? null}
+          artist={settings?.now_playing_artist ?? null}
+          spotifyEmbedUrl={settings?.spotify_embed_url ?? null}
+        />
+
+        <QuoteOfTheDay quote={settings?.quote_of_day ?? null} />
+
+        <Carousel images={imageUrls} />
+
+        <EditorialBlock
+          url={articleUrl}
+          title={previewTitle}
+          excerpt={previewExcerpt}
+          publishedAt={feedPost?.publishedAt ?? null}
+          author={previewAuthor}
+        />
+
+        <Footer />
+      </div>
+    </div>
+  );
 }
