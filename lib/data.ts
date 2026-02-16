@@ -1,10 +1,17 @@
 import { getSupabaseServerClient } from "@/lib/supabase-server";
 import type { AppSettings, CarouselImage } from "@/types/content";
 
+function isMissingColumnError(message: string): boolean {
+  return (
+    message.includes("column") &&
+    (message.includes("editorial_feed_url") || message.includes("section_order"))
+  );
+}
+
 export async function getAppSettings(): Promise<AppSettings | null> {
   const supabase = getSupabaseServerClient();
 
-  const { data, error } = await supabase
+  const primary = await supabase
     .from("app_settings")
     .select(
       "id, now_playing_title, now_playing_artist, spotify_embed_url, quote_of_day, latest_article_url, editorial_feed_url, section_order, updated_at"
@@ -12,11 +19,33 @@ export async function getAppSettings(): Promise<AppSettings | null> {
     .eq("id", 1)
     .maybeSingle();
 
-  if (error) {
-    throw new Error(`Failed to load app settings: ${error.message}`);
+  if (!primary.error) {
+    return primary.data;
   }
 
-  return data;
+  if (!isMissingColumnError(primary.error.message)) {
+    throw new Error(`Failed to load app settings: ${primary.error.message}`);
+  }
+
+  const fallback = await supabase
+    .from("app_settings")
+    .select("id, now_playing_title, now_playing_artist, spotify_embed_url, quote_of_day, latest_article_url, updated_at")
+    .eq("id", 1)
+    .maybeSingle();
+
+  if (fallback.error) {
+    throw new Error(`Failed to load app settings: ${fallback.error.message}`);
+  }
+
+  if (!fallback.data) {
+    return null;
+  }
+
+  return {
+    ...fallback.data,
+    editorial_feed_url: null,
+    section_order: null
+  };
 }
 
 export async function getCarouselImages(): Promise<CarouselImage[]> {
