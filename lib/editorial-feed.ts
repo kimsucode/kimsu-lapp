@@ -24,8 +24,12 @@ function decodeEntities(input: string): string {
     .replace(/&gt;/gi, ">");
 }
 
+function removeCdata(input: string): string {
+  return input.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/gi, "$1");
+}
+
 function cleanText(input: string): string {
-  return decodeEntities(stripTags(input)).replace(/\s+/g, " ").trim();
+  return decodeEntities(stripTags(removeCdata(input))).replace(/\s+/g, " ").trim();
 }
 
 function getTagContent(xml: string, tagName: string): string | null {

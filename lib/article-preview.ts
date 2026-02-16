@@ -5,6 +5,7 @@ import { truncateSmart } from "@/lib/excerpt";
 type ArticlePreview = {
   title: string | null;
   excerpt: string | null;
+  author: string | null;
 };
 
 function stripTags(input: string): string {
@@ -41,18 +42,18 @@ function firstMatch(html: string, patterns: RegExp[]): string | null {
 
 export async function getArticlePreview(url: string | null): Promise<ArticlePreview> {
   if (!url) {
-    return { title: null, excerpt: null };
+    return { title: null, excerpt: null, author: null };
   }
 
   let parsed: URL;
   try {
     parsed = new URL(url);
   } catch {
-    return { title: null, excerpt: null };
+    return { title: null, excerpt: null, author: null };
   }
 
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-    return { title: null, excerpt: null };
+    return { title: null, excerpt: null, author: null };
   }
 
   const controller = new AbortController();
@@ -68,12 +69,12 @@ export async function getArticlePreview(url: string | null): Promise<ArticlePrev
     });
 
     if (!response.ok) {
-      return { title: null, excerpt: null };
+      return { title: null, excerpt: null, author: null };
     }
 
     const contentType = response.headers.get("content-type") || "";
     if (!contentType.includes("text/html")) {
-      return { title: null, excerpt: null };
+      return { title: null, excerpt: null, author: null };
     }
 
     const html = await response.text();
@@ -92,12 +93,20 @@ export async function getArticlePreview(url: string | null): Promise<ArticlePrev
       /<p[^>]*>([\s\S]*?)<\/p>/i
     ]);
 
+    const author = firstMatch(html, [
+      /<meta[^>]+name=["']author["'][^>]+content=["']([^"']+)["'][^>]*>/i,
+      /<meta[^>]+content=["']([^"']+)["'][^>]+name=["']author["'][^>]*>/i,
+      /<meta[^>]+property=["']article:author["'][^>]+content=["']([^"']+)["'][^>]*>/i,
+      /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']article:author["'][^>]*>/i
+    ]);
+
     return {
       title,
-      excerpt: excerpt ? truncateSmart(excerpt, 360) : null
+      excerpt: excerpt ? truncateSmart(excerpt, 360) : null,
+      author
     };
   } catch {
-    return { title: null, excerpt: null };
+    return { title: null, excerpt: null, author: null };
   } finally {
     clearTimeout(timeout);
   }

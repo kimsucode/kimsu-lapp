@@ -29,11 +29,12 @@ export default async function HomePage() {
   const articleUrl = feedPost?.url ?? settings?.latest_article_url ?? null;
 
   const articlePreview = feedPost?.title && feedPost?.excerpt
-    ? { title: feedPost.title, excerpt: feedPost.excerpt }
+    ? { title: feedPost.title, excerpt: feedPost.excerpt, author: feedPost.author }
     : await getArticlePreview(articleUrl);
 
   const previewTitle = feedPost?.title ?? articlePreview.title;
   const previewExcerpt = feedPost?.excerpt ?? articlePreview.excerpt ?? buildFallbackExcerpt(previewTitle);
+  const previewAuthor = feedPost?.author ?? articlePreview.author;
 
   const sections: Record<HomeSectionKey, ReactNode> = {
     now_playing: (
@@ -51,7 +52,7 @@ export default async function HomePage() {
         title={previewTitle}
         excerpt={previewExcerpt}
         publishedAt={feedPost?.publishedAt ?? null}
-        author={feedPost?.author ?? null}
+        author={previewAuthor}
       />
     )
   };
