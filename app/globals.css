@@ -126,3 +126,74 @@ label {
     align-items: start;
   }
 }
+
+.quote-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #d99f89;
+  background: linear-gradient(135deg, #fff4ef 0%, #ffe7db 55%, #f2d6cb 100%);
+  box-shadow: 0 14px 28px rgba(130, 60, 40, 0.18);
+  transform: translateY(0);
+  animation: quoteCardIn 360ms ease-out;
+}
+
+.quote-card::after {
+  content: "";
+  position: absolute;
+  right: -34px;
+  top: -34px;
+  width: 110px;
+  height: 110px;
+  border-radius: 999px;
+  background: rgba(197, 95, 61, 0.2);
+}
+
+.quote-title-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.quote-title-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #8a351f;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(197, 95, 61, 0.35);
+  border-radius: 999px;
+  padding: 4px 8px;
+}
+
+.quote-text {
+  position: relative;
+  margin: 0;
+  line-height: 1.65;
+  font-size: 1.04rem;
+  font-weight: 600;
+  color: #512214;
+}
+
+.quote-mark {
+  display: inline-block;
+  margin-right: 6px;
+  font-family: var(--font-heading), sans-serif;
+  font-size: 1.6rem;
+  line-height: 0;
+  color: #a1472d;
+}
+
+@keyframes quoteCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
