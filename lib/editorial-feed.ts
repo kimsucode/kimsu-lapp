@@ -7,6 +7,7 @@ export type EditorialPost = {
   url: string | null;
   excerpt: string | null;
   publishedAt: string | null;
+  author: string | null;
 };
 
 function stripTags(input: string): string {
@@ -41,6 +42,12 @@ function getFirstTagContent(xml: string, tagNames: string[]): string | null {
   return null;
 }
 
+function getAtomAuthor(entryXml: string): string | null {
+  const authorBlock = entryXml.match(/<author\b[\s\S]*?<\/author>/i)?.[0];
+  if (!authorBlock) return null;
+  return getFirstTagContent(authorBlock, ["name", "email"]);
+}
+
 function getLinkFromAtomEntry(entryXml: string): string | null {
   const links = [...entryXml.matchAll(/<link\b([^>]*)>/gi)];
   for (const link of links) {
@@ -65,7 +72,8 @@ function extractRssItem(xml: string): EditorialPost | null {
     title: getTagContent(item, "title"),
     url: getTagContent(item, "link"),
     excerpt: excerpt ? truncateSmart(excerpt, 360) : null,
-    publishedAt: getTagContent(item, "pubDate")
+    publishedAt: getTagContent(item, "pubDate"),
+    author: getFirstTagContent(item, ["dc:creator", "author"])
   };
 }
 
@@ -80,7 +88,8 @@ function extractAtomEntry(xml: string): EditorialPost | null {
     title: getTagContent(entry, "title"),
     url: getLinkFromAtomEntry(entry),
     excerpt: excerpt ? truncateSmart(excerpt, 360) : null,
-    publishedAt: getTagContent(entry, "published") ?? getTagContent(entry, "updated")
+    publishedAt: getTagContent(entry, "published") ?? getTagContent(entry, "updated"),
+    author: getAtomAuthor(entry)
   };
 }
 

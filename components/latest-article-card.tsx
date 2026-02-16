@@ -3,6 +3,7 @@ type Props = {
   title: string | null;
   excerpt: string | null;
   publishedAt: string | null;
+  author: string | null;
 };
 
 function formatPublishedDate(value: string | null): string | null {
@@ -17,8 +18,16 @@ function formatPublishedDate(value: string | null): string | null {
   }).format(date);
 }
 
-export function LatestArticleCard({ url, title, excerpt, publishedAt }: Props) {
+function buildMetaLine(date: string | null, author: string | null): string | null {
+  if (date && author) return `Publié le ${date} · par ${author}`;
+  if (date) return `Publié le ${date}`;
+  if (author) return `Par ${author}`;
+  return null;
+}
+
+export function LatestArticleCard({ url, title, excerpt, publishedAt, author }: Props) {
   const formattedDate = formatPublishedDate(publishedAt);
+  const metaLine = buildMetaLine(formattedDate, author);
 
   return (
     <section className="card">
@@ -27,9 +36,9 @@ export function LatestArticleCard({ url, title, excerpt, publishedAt }: Props) {
       {url ? (
         <>
           <p style={{ margin: "0 0 8px", fontWeight: 700 }}>{title || "Aperçu du dernier article"}</p>
-          {formattedDate ? (
+          {metaLine ? (
             <p className="muted" style={{ margin: "0 0 8px", fontSize: "0.9rem" }}>
-              Publié le {formattedDate}
+              {metaLine}
             </p>
           ) : null}
           <p className="muted" style={{ margin: "0 0 10px", lineHeight: 1.5 }}>

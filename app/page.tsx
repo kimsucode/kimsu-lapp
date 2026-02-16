@@ -51,6 +51,7 @@ export default async function HomePage() {
         title={previewTitle}
         excerpt={previewExcerpt}
         publishedAt={feedPost?.publishedAt ?? null}
+        author={feedPost?.author ?? null}
       />
     )
   };
