@@ -19,7 +19,7 @@ type Props = {
 
 const sectionLabels: Record<HomeSectionKey, string> = {
   now_playing: "Now Playing",
-  carousel: "Carousel images",
+  carousel: "Carousel",
   quote: "Phrase du jour",
   latest_article: "Dernier article"
 };
@@ -34,6 +34,10 @@ function moveItem(order: HomeSectionKey[], index: number, direction: -1 | 1): Ho
   const [item] = copy.splice(index, 1);
   copy.splice(nextIndex, 0, item);
   return copy;
+}
+
+function inputClassName() {
+  return "w-full rounded-xl border border-borderSubtle bg-[#14141c] px-3 py-2.5 text-sm text-textPrimary placeholder:text-textMuted focus:border-lavender/45 focus:outline-none";
 }
 
 export function AdminSettingsForm({ initialValues }: Props) {
@@ -89,91 +93,122 @@ export function AdminSettingsForm({ initialValues }: Props) {
   }
 
   return (
-    <section className="card">
-      <h2 className="section-title">Contenu Home</h2>
+    <section className="rounded-soft border border-borderSubtle bg-surface p-4 shadow-soft sm:p-5">
+      <div className="mb-4">
+        <h2 className="text-lg font-semibold">Contenu Home</h2>
+        <p className="mt-1 text-sm text-textSecondary">Paramètres éditoriaux et ordre d'affichage.</p>
+      </div>
 
-      <form onSubmit={onSubmit}>
-        <div className="form-group">
-          <label htmlFor="song-title">Titre du morceau</label>
-          <input
-            id="song-title"
-            value={values.now_playing_title}
-            onChange={(event) => setValues((v) => ({ ...v, now_playing_title: event.target.value }))}
-          />
-        </div>
+      <form onSubmit={onSubmit} className="space-y-4">
+        <div className="space-y-3 rounded-2xl border border-borderSubtle/70 bg-[#121219] p-3 sm:p-4">
+          <p className="text-xs uppercase tracking-[0.12em] text-textMuted">Now Playing</p>
 
-        <div className="form-group">
-          <label htmlFor="song-artist">Artiste</label>
-          <input
-            id="song-artist"
-            value={values.now_playing_artist}
-            onChange={(event) => setValues((v) => ({ ...v, now_playing_artist: event.target.value }))}
-          />
-        </div>
+          <div>
+            <label htmlFor="song-title" className="mb-1.5 block text-sm text-textSecondary">
+              Titre du morceau
+            </label>
+            <input
+              id="song-title"
+              className={inputClassName()}
+              value={values.now_playing_title}
+              onChange={(event) => setValues((v) => ({ ...v, now_playing_title: event.target.value }))}
+            />
+          </div>
 
-        <div className="form-group">
-          <label htmlFor="spotify">Lien Spotify</label>
-          <input
-            id="spotify"
-            placeholder="https://open.spotify.com/track/..."
-            value={values.spotify_embed_url}
-            onChange={(event) => setValues((v) => ({ ...v, spotify_embed_url: event.target.value }))}
-          />
-        </div>
+          <div>
+            <label htmlFor="song-artist" className="mb-1.5 block text-sm text-textSecondary">
+              Artiste
+            </label>
+            <input
+              id="song-artist"
+              className={inputClassName()}
+              value={values.now_playing_artist}
+              onChange={(event) => setValues((v) => ({ ...v, now_playing_artist: event.target.value }))}
+            />
+          </div>
 
-        <div className="form-group">
-          <label htmlFor="quote">Phrase du jour</label>
-          <textarea
-            id="quote"
-            rows={4}
-            value={values.quote_of_day}
-            onChange={(event) => setValues((v) => ({ ...v, quote_of_day: event.target.value }))}
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="article">URL dernier article (fallback manuel)</label>
-          <input
-            id="article"
-            type="url"
-            placeholder="https://..."
-            value={values.latest_article_url}
-            onChange={(event) => setValues((v) => ({ ...v, latest_article_url: event.target.value }))}
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="feed">URL flux éditorial RSS/Atom (auto)</label>
-          <input
-            id="feed"
-            type="url"
-            placeholder="https://tonblog.com/feed.xml"
-            value={values.editorial_feed_url}
-            onChange={(event) => setValues((v) => ({ ...v, editorial_feed_url: event.target.value }))}
-          />
-          <div style={{ marginTop: 8 }}>
-            <button
-              type="button"
-              className="secondary"
-              onClick={onRefreshFeed}
-              disabled={isRefreshingFeed}
-            >
-              {isRefreshingFeed ? "Rafraîchissement..." : "Rafraîchir le flux éditorial"}
-            </button>
+          <div>
+            <label htmlFor="spotify" className="mb-1.5 block text-sm text-textSecondary">
+              Lien Spotify
+            </label>
+            <input
+              id="spotify"
+              className={inputClassName()}
+              placeholder="https://open.spotify.com/track/..."
+              value={values.spotify_embed_url}
+              onChange={(event) => setValues((v) => ({ ...v, spotify_embed_url: event.target.value }))}
+            />
           </div>
         </div>
 
-        <div className="form-group">
-          <label>Ordre des sections (Home)</label>
-          <div className="image-list">
+        <div className="space-y-3 rounded-2xl border border-borderSubtle/70 bg-[#121219] p-3 sm:p-4">
+          <p className="text-xs uppercase tracking-[0.12em] text-textMuted">Editorial</p>
+
+          <div>
+            <label htmlFor="quote" className="mb-1.5 block text-sm text-textSecondary">
+              Phrase du jour
+            </label>
+            <textarea
+              id="quote"
+              rows={4}
+              className={inputClassName()}
+              value={values.quote_of_day}
+              onChange={(event) => setValues((v) => ({ ...v, quote_of_day: event.target.value }))}
+            />
+          </div>
+
+          <div>
+            <label htmlFor="article" className="mb-1.5 block text-sm text-textSecondary">
+              URL dernier article (fallback)
+            </label>
+            <input
+              id="article"
+              type="url"
+              className={inputClassName()}
+              placeholder="https://..."
+              value={values.latest_article_url}
+              onChange={(event) => setValues((v) => ({ ...v, latest_article_url: event.target.value }))}
+            />
+          </div>
+
+          <div>
+            <label htmlFor="feed" className="mb-1.5 block text-sm text-textSecondary">
+              URL flux RSS/Atom
+            </label>
+            <input
+              id="feed"
+              type="url"
+              className={inputClassName()}
+              placeholder="https://tonblog.com/feed.xml"
+              value={values.editorial_feed_url}
+              onChange={(event) => setValues((v) => ({ ...v, editorial_feed_url: event.target.value }))}
+            />
+            <div className="mt-2">
+              <button
+                type="button"
+                className="rounded-full border border-borderSubtle bg-[#1a1a22] px-4 py-2 text-sm text-textSecondary transition-colors duration-300 ease-calm hover:text-textPrimary"
+                onClick={onRefreshFeed}
+                disabled={isRefreshingFeed}
+              >
+                {isRefreshingFeed ? "Rafraîchissement..." : "Rafraîchir le flux éditorial"}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-3 rounded-2xl border border-borderSubtle/70 bg-[#121219] p-3 sm:p-4">
+          <p className="text-xs uppercase tracking-[0.12em] text-textMuted">Ordre des sections</p>
+          <div className="space-y-2">
             {values.section_order.map((section, index) => (
-              <div className="image-row" key={section}>
-                <span className="muted" style={{ flex: 1 }}>
-                  {index + 1}. {sectionLabels[section]}
-                </span>
+              <div
+                key={section}
+                className="flex items-center gap-2 rounded-xl border border-borderSubtle bg-[#171720] p-2"
+              >
+                <span className="min-w-[24px] text-center text-xs text-textMuted">{index + 1}</span>
+                <span className="flex-1 text-sm text-textPrimary">{sectionLabels[section]}</span>
                 <button
                   type="button"
-                  className="secondary"
+                  className="rounded-full border border-borderSubtle px-3 py-1.5 text-xs text-textSecondary hover:text-textPrimary disabled:opacity-40"
                   onClick={() =>
                     setValues((v) => ({
                       ...v,
@@ -186,7 +221,7 @@ export function AdminSettingsForm({ initialValues }: Props) {
                 </button>
                 <button
                   type="button"
-                  className="secondary"
+                  className="rounded-full border border-borderSubtle px-3 py-1.5 text-xs text-textSecondary hover:text-textPrimary disabled:opacity-40"
                   onClick={() =>
                     setValues((v) => ({
                       ...v,
@@ -202,11 +237,17 @@ export function AdminSettingsForm({ initialValues }: Props) {
           </div>
         </div>
 
-        <button type="submit" disabled={isLoading}>
-          {isLoading ? "Sauvegarde..." : "Sauvegarder"}
-        </button>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="rounded-full border border-lavender/45 bg-lavender/20 px-5 py-2.5 text-sm font-medium text-lavender transition-colors duration-300 ease-calm hover:bg-lavender/30"
+          >
+            {isLoading ? "Sauvegarde..." : "Sauvegarder"}
+          </button>
 
-        {message ? <p className="muted">{message}</p> : null}
+          {message ? <p className="text-sm text-textSecondary">{message}</p> : null}
+        </div>
       </form>
     </section>
   );

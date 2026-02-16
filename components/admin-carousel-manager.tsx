@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 
 type CarouselItem = {
   id: string;
@@ -13,10 +13,20 @@ type Props = {
   initialImages: CarouselItem[];
 };
 
+function orderImages(items: CarouselItem[]) {
+  return [...items].sort((a, b) => a.sortOrder - b.sortOrder);
+}
+
+function inputClassName() {
+  return "w-full rounded-xl border border-borderSubtle bg-[#14141c] px-3 py-2.5 text-sm text-textPrimary placeholder:text-textMuted focus:border-lavender/45 focus:outline-none";
+}
+
 export function AdminCarouselManager({ initialImages }: Props) {
-  const [images, setImages] = useState(initialImages);
+  const [images, setImages] = useState(orderImages(initialImages));
   const [message, setMessage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+
+  const canUpload = useMemo(() => images.length < 10, [images.length]);
 
   async function onUpload(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -30,7 +40,7 @@ export function AdminCarouselManager({ initialImages }: Props) {
       return;
     }
 
-    if (images.length >= 10) {
+    if (!canUpload) {
       setMessage("Maximum 10 images.");
       return;
     }
@@ -55,7 +65,7 @@ export function AdminCarouselManager({ initialImages }: Props) {
     }
 
     const payload = (await response.json()) as { image: CarouselItem };
-    setImages((current) => [...current, payload.image].sort((a, b) => a.sortOrder - b.sortOrder));
+    setImages((current) => orderImages([...current, payload.image]));
     setMessage("Image ajoutée.");
     form.reset();
   }
@@ -77,46 +87,72 @@ export function AdminCarouselManager({ initialImages }: Props) {
   }
 
   return (
-    <section className="card">
-      <h2 className="section-title">Carousel ({images.length}/10)</h2>
+    <section className="rounded-soft border border-borderSubtle bg-surface p-4 shadow-soft sm:p-5">
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold">Carousel</h2>
+          <p className="mt-1 text-sm text-textSecondary">{images.length}/10 images • ordre manuel</p>
+        </div>
+      </div>
 
-      <form onSubmit={onUpload} style={{ marginBottom: 14 }}>
-        <div className="form-group">
-          <label htmlFor="image">Image</label>
-          <input id="image" name="image" type="file" accept="image/*" required />
+      <form onSubmit={onUpload} className="space-y-3 rounded-2xl border border-borderSubtle/70 bg-[#121219] p-3 sm:p-4">
+        <div>
+          <label htmlFor="image" className="mb-1.5 block text-sm text-textSecondary">
+            Nouvelle image
+          </label>
+          <input id="image" name="image" type="file" accept="image/*" required className={inputClassName()} />
         </div>
 
-        <div className="form-group">
-          <label htmlFor="sortOrder">Ordre</label>
-          <input id="sortOrder" name="sortOrder" type="number" min={0} defaultValue={images.length} />
+        <div>
+          <label htmlFor="sortOrder" className="mb-1.5 block text-sm text-textSecondary">
+            Position
+          </label>
+          <input
+            id="sortOrder"
+            name="sortOrder"
+            type="number"
+            min={0}
+            defaultValue={images.length}
+            className={inputClassName()}
+          />
         </div>
 
-        <button type="submit" disabled={isUploading || images.length >= 10}>
-          {isUploading ? "Upload..." : "Ajouter l'image"}
+        <button
+          type="submit"
+          disabled={!canUpload || isUploading}
+          className="rounded-full border border-lavender/45 bg-lavender/20 px-5 py-2.5 text-sm font-medium text-lavender transition-colors duration-300 ease-calm hover:bg-lavender/30 disabled:opacity-50"
+        >
+          {isUploading ? "Upload..." : canUpload ? "Ajouter l'image" : "Limite atteinte"}
         </button>
       </form>
 
-      <div className="image-list">
+      <div className="mt-4 space-y-2">
         {images.map((image) => (
-          <div className="image-row" key={image.id}>
-            <img
-              src={image.url}
-              alt="Carousel"
-              style={{ width: 80, height: 56, objectFit: "cover", borderRadius: 8 }}
-            />
-            <span className="muted" style={{ flex: 1 }}>
-              Ordre: {image.sortOrder}
-            </span>
-            <button type="button" className="secondary" onClick={() => onDelete(image.id)}>
+          <div
+            key={image.id}
+            className="flex items-center gap-3 rounded-xl border border-borderSubtle bg-[#171720] p-2"
+          >
+            <img src={image.url} alt="Carousel" className="h-12 w-16 rounded-lg object-cover" />
+            <div className="flex-1">
+              <p className="text-sm text-textPrimary">Image</p>
+              <p className="text-xs text-textMuted">Ordre: {image.sortOrder}</p>
+            </div>
+            <button
+              type="button"
+              className="rounded-full border border-borderSubtle px-3 py-1.5 text-xs text-textSecondary transition-colors duration-300 ease-calm hover:text-textPrimary"
+              onClick={() => onDelete(image.id)}
+            >
               Supprimer
             </button>
           </div>
         ))}
 
-        {images.length === 0 ? <p className="muted">Aucune image.</p> : null}
+        {images.length === 0 ? (
+          <p className="rounded-xl border border-borderSubtle bg-[#171720] p-3 text-sm text-textSecondary">Aucune image.</p>
+        ) : null}
       </div>
 
-      {message ? <p className="muted">{message}</p> : null}
+      {message ? <p className="mt-3 text-sm text-textSecondary">{message}</p> : null}
     </section>
   );
 }
