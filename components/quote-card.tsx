@@ -9,7 +9,7 @@ export function QuoteCard({ quote }: Props) {
         <h2 className="section-title" style={{ marginBottom: 0 }}>
           Phrase du jour
         </h2>
-        <span className="quote-title-badge">Highlight</span>
+        <span className="quote-title-badge">Phrase du jour</span>
       </div>
 
       <p className="quote-text">
