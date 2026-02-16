@@ -7,6 +7,7 @@ export type AppSettings = {
   spotify_embed_url: string | null;
   quote_of_day: string | null;
   latest_article_url: string | null;
+  editorial_feed_url: string | null;
   section_order: HomeSectionKey[] | null;
   updated_at: string;
 };

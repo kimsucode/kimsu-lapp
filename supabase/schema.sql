@@ -5,6 +5,7 @@ create table if not exists public.app_settings (
   spotify_embed_url text,
   quote_of_day text,
   latest_article_url text,
+  editorial_feed_url text,
   section_order jsonb not null default '["now_playing","carousel","quote","latest_article"]'::jsonb,
   updated_at timestamptz not null default now()
 );

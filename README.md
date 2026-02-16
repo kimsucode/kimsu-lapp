@@ -14,7 +14,7 @@ Mini web-app mobile-first (PWA) avec une home publique et un admin privé.
 - Bloc **Now Playing** (titre + artiste + embed Spotify)
 - Carousel d'images (jusqu'à 10)
 - Phrase du jour
-- Lien vers le dernier article
+- Extrait du dernier article (auto via flux RSS/Atom ou fallback manuel)
 
 - Admin `/admin`
 - Login par mot de passe simple
@@ -28,6 +28,7 @@ Mini web-app mobile-first (PWA) avec une home publique et un admin privé.
 - `app/admin/login/page.tsx`: login admin
 - `app/admin/page.tsx`: dashboard admin
 - `app/api/admin/*`: endpoints admin
+- `app/api/revalidate/editorial`: webhook de refresh immédiat feed
 - `components/*`: composants UI
 - `lib/*`: auth, data, supabase
 - `supabase/schema.sql`: schéma DB + bucket storage
@@ -48,6 +49,7 @@ Variables requises:
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `ADMIN_PASSWORD`
 - `ADMIN_SESSION_SECRET`
+- `EDITORIAL_WEBHOOK_SECRET`
 
 ## Setup local
 
@@ -61,7 +63,7 @@ npm install
 
 - Ouvrir Supabase SQL Editor
 - Exécuter `supabase/schema.sql`
-- Si la DB existe déjà, exécuter aussi `supabase/migrations/002_add_section_order.sql`
+- Si la DB existe déjà, exécuter aussi `supabase/migrations/002_add_section_order.sql` puis `supabase/migrations/003_add_editorial_feed.sql`
 
 3. Lancer l'app
 
@@ -92,3 +94,20 @@ npm run dev
 - `/admin` redirige vers `/admin/login` si non connecté
 - Update settings admin reflété sur Home
 - Upload image visible dans carousel
+
+## Flux éditorial auto (publication -> refresh)
+
+1. Dans `/admin`, renseigne `URL flux éditorial RSS/Atom (auto)`.
+2. Configure ton blog/CMS pour appeler ce webhook à chaque publication:
+
+```bash
+POST /api/revalidate/editorial?secret=EDITORIAL_WEBHOOK_SECRET
+```
+
+Exemple URL en production:
+
+```text
+https://ton-domaine.com/api/revalidate/editorial?secret=TON_SECRET
+```
+
+Tu peux aussi envoyer le secret dans le header `x-webhook-secret`.

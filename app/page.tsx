@@ -6,6 +6,7 @@ import { NowPlayingCard } from "@/components/now-playing-card";
 import { QuoteCard } from "@/components/quote-card";
 import { getArticlePreview } from "@/lib/article-preview";
 import { getAppSettings, getCarouselImages, getPublicImageUrl } from "@/lib/data";
+import { getLatestPostFromFeed } from "@/lib/editorial-feed";
 import { normalizeHomeSectionOrder } from "@/lib/sections";
 import type { HomeSectionKey } from "@/types/content";
 
@@ -17,7 +18,12 @@ export default async function HomePage() {
     url: getPublicImageUrl(image.storage_path)
   }));
 
-  const articlePreview = await getArticlePreview(settings?.latest_article_url ?? null);
+  const feedPost = await getLatestPostFromFeed(settings?.editorial_feed_url ?? null);
+  const articleUrl = feedPost?.url ?? settings?.latest_article_url ?? null;
+
+  const articlePreview = feedPost?.title && feedPost?.excerpt
+    ? { title: feedPost.title, excerpt: feedPost.excerpt }
+    : await getArticlePreview(articleUrl);
 
   const sections: Record<HomeSectionKey, ReactNode> = {
     now_playing: (
@@ -31,9 +37,9 @@ export default async function HomePage() {
     quote: <QuoteCard quote={settings?.quote_of_day ?? null} />,
     latest_article: (
       <LatestArticleCard
-        url={settings?.latest_article_url ?? null}
-        title={articlePreview.title}
-        excerpt={articlePreview.excerpt}
+        url={articleUrl}
+        title={feedPost?.title ?? articlePreview.title}
+        excerpt={feedPost?.excerpt ?? articlePreview.excerpt}
       />
     )
   };

@@ -25,6 +25,7 @@ export default async function AdminPage() {
             spotify_embed_url: settings?.spotify_embed_url ?? "",
             quote_of_day: settings?.quote_of_day ?? "",
             latest_article_url: settings?.latest_article_url ?? "",
+            editorial_feed_url: settings?.editorial_feed_url ?? "",
             section_order: normalizeHomeSectionOrder(settings?.section_order)
           }}
         />

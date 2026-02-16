@@ -12,6 +12,7 @@ type Props = {
     spotify_embed_url: string;
     quote_of_day: string;
     latest_article_url: string;
+    editorial_feed_url: string;
     section_order: HomeSectionKey[];
   };
 };
@@ -112,13 +113,24 @@ export function AdminSettingsForm({ initialValues }: Props) {
         </div>
 
         <div className="form-group">
-          <label htmlFor="article">URL dernier article</label>
+          <label htmlFor="article">URL dernier article (fallback manuel)</label>
           <input
             id="article"
             type="url"
             placeholder="https://..."
             value={values.latest_article_url}
             onChange={(event) => setValues((v) => ({ ...v, latest_article_url: event.target.value }))}
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="feed">URL flux éditorial RSS/Atom (auto)</label>
+          <input
+            id="feed"
+            type="url"
+            placeholder="https://tonblog.com/feed.xml"
+            value={values.editorial_feed_url}
+            onChange={(event) => setValues((v) => ({ ...v, editorial_feed_url: event.target.value }))}
           />
         </div>
 
