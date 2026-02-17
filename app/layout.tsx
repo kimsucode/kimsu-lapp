@@ -22,7 +22,11 @@ const cormorant = Cormorant_Garamond({
 export const metadata: Metadata = {
   title: "Blog Companion",
   description: "Mini web-app PWA en support de blog",
-  applicationName: "Blog Companion"
+  applicationName: "Blog Companion",
+  icons: {
+    icon: "/icons/icon-192.png",
+    apple: "/icons/apple-touch-icon.png"
+  }
 };
 
 export default function RootLayout({
