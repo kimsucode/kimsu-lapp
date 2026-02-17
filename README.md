@@ -210,3 +210,4 @@ La card phrase du jour supporte maintenant:
 - `Story`: genere une image PNG.
 - Si `navigator.share` supporte les fichiers: partage direct de l'image.
 - Sinon: telechargement de l'image pour ajout manuel en story.
+
