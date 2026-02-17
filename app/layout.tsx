@@ -22,7 +22,19 @@ const cormorant = Cormorant_Garamond({
 export const metadata: Metadata = {
   title: "Kimsu l'App",
   description: "Une app chill pour les gens chill.",
-  applicationName: "KIMSU"
+  applicationName: "KIMSU",
+  openGraph: {
+    title: "Kimsu l'App",
+    description: "Une app chill pour les gens chill.",
+    type: "website",
+    url: "https://kimsu-lapp.vercel.app",
+    siteName: "Kimsu l'App"
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Kimsu l'App",
+    description: "Une app chill pour les gens chill."
+  }
 };
 
 export default function RootLayout({
