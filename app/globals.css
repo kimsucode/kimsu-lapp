@@ -27,7 +27,7 @@ body {
 }
 
 body {
-  font-family: var(--font-body), sans-serif;
+  font-family: var(--font-dm), system-ui, sans-serif;
 }
 
 a {
@@ -53,7 +53,7 @@ main {
 
 .section-title {
   margin: 0 0 10px;
-  font-family: var(--font-heading), sans-serif;
+  font-family: var(--font-dm), system-ui, sans-serif;
   letter-spacing: 0.3px;
   font-size: 1.1rem;
 }
@@ -184,7 +184,7 @@ label {
 .quote-mark {
   display: inline-block;
   margin-right: 6px;
-  font-family: var(--font-heading), sans-serif;
+  font-family: var(--font-dm), system-ui, sans-serif;
   font-size: 1.6rem;
   line-height: 0;
   color: #a1472d;
@@ -252,7 +252,7 @@ label {
 
 .preview-title {
   margin: 0 0 6px;
-  font-family: var(--font-heading), sans-serif;
+  font-family: var(--font-dm), system-ui, sans-serif;
   font-size: 1.4rem;
 }
 
@@ -298,7 +298,7 @@ label {
 
 .preview-h2 {
   margin: 0 0 4px;
-  font-family: var(--font-heading), sans-serif;
+  font-family: var(--font-dm), system-ui, sans-serif;
 }
 
 .preview-body {

@@ -7,6 +7,8 @@ type IconProps = {
   className?: string;
 };
 
+type IconComponent = React.ComponentType<IconProps>;
+
 function FallbackWaveIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
@@ -24,10 +26,8 @@ export default function MusicWave({ isPlaying }: { isPlaying: boolean }) {
   const [speed, setSpeed] = useState(2.8);
 
   const WaveIcon = useMemo(() => {
-    const candidate =
-      (LucideIcons as Record<string, React.ComponentType<IconProps>>).Waveform ||
-      (LucideIcons as Record<string, React.ComponentType<IconProps>>).AudioWaveform ||
-      (LucideIcons as Record<string, React.ComponentType<IconProps>>).AudioLines;
+    const iconSet = LucideIcons as unknown as Record<string, IconComponent>;
+    const candidate = iconSet.Waveform || iconSet.AudioWaveform || iconSet.AudioLines;
 
     return candidate ?? FallbackWaveIcon;
   }, []);

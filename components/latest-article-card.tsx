@@ -45,7 +45,7 @@ export function LatestArticleCard({ url, title, excerpt, publishedAt, author }: 
             {excerpt || "Nouveau contenu disponible sur le blog."}
           </p>
           <a href={url} target="_blank" rel="noreferrer" style={{ textDecoration: "underline" }}>
-            Ouvrir l'article complet
+            Ouvrir l&apos;article complet
           </a>
         </>
       ) : (

@@ -19,6 +19,14 @@ export type CarouselImage = {
   created_at: string;
 };
 
+export type FocusAudioTrack = {
+  id: string;
+  label: string;
+  storage_path: string;
+  sort_order: number;
+  created_at: string;
+};
+
 export type Moment = {
   id: string;
   day: string;

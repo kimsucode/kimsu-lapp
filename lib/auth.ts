@@ -1,41 +1,63 @@
-import { createHmac, timingSafeEqual } from "crypto";
-
-import { env } from "@/lib/env";
+import { getAuthEnv } from "@/lib/env";
 
 export const ADMIN_COOKIE_NAME = "admin_session";
 
-function signAdminSession(): string {
-  return createHmac("sha256", env.adminSessionSecret)
-    .update(`admin:${env.adminPassword}`)
-    .digest("hex");
+const te = new TextEncoder();
+
+function toHex(bytes: ArrayBuffer) {
+  return Array.from(new Uint8Array(bytes))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
 
-export function verifyPassword(candidate: string): boolean {
-  const expected = Buffer.from(env.adminPassword);
-  const input = Buffer.from(candidate);
-
-  if (expected.length !== input.length) {
-    return false;
+function fromHex(hex: string) {
+  if (!hex || hex.length % 2 !== 0) return new Uint8Array();
+  const out = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < out.length; i++) {
+    out[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
   }
-
-  return timingSafeEqual(expected, input);
+  return out;
 }
 
-export function buildAdminSessionValue(): string {
-  return signAdminSession();
+async function hmacSha256Hex(message: string, secret: string) {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    te.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const sig = await crypto.subtle.sign("HMAC", key, te.encode(message));
+  return toHex(sig);
 }
 
-export function isValidAdminSession(value: string | undefined): boolean {
-  if (!value) {
-    return false;
-  }
+function timingSafeEqualBytes(a: Uint8Array, b: Uint8Array) {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a[i] ^ b[i];
+  return diff === 0;
+}
 
-  const expected = Buffer.from(signAdminSession());
-  const provided = Buffer.from(value);
+function buildPayload() {
+  return String(Date.now());
+}
 
-  if (expected.length !== provided.length) {
-    return false;
-  }
+export async function signAdminSession() {
+  const { ADMIN_SESSION_SECRET } = getAuthEnv();
+  const payload = buildPayload();
+  const sig = await hmacSha256Hex(payload, ADMIN_SESSION_SECRET);
+  return `${payload}.${sig}`;
+}
 
-  return timingSafeEqual(expected, provided);
+export async function isValidAdminSession(session?: string | null) {
+  if (!session) return false;
+  const [payload, sig] = session.split(".");
+  if (!payload || !sig) return false;
+
+  const { ADMIN_SESSION_SECRET } = getAuthEnv();
+  const expected = await hmacSha256Hex(payload, ADMIN_SESSION_SECRET);
+
+  const a = fromHex(sig);
+  const b = fromHex(expected);
+  return timingSafeEqualBytes(a, b);
 }

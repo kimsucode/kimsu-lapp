@@ -42,12 +42,33 @@ const config: Config = {
         music: {
           "0%, 100%": { transform: "translateY(0) scale(1)", opacity: "0.95" },
           "50%": { transform: "translateY(-2px) scale(1.03)", opacity: "1" }
+        },
+        breatheSimple: {
+          "0%, 100%": { transform: "scale(0.92)", opacity: "0.76" },
+          "50%": { transform: "scale(1.08)", opacity: "1" }
+        },
+        breatheCalm: {
+          "0%": { transform: "scale(0.9)", opacity: "0.72" },
+          "28.57%": { transform: "scale(1.08)", opacity: "1" },
+          "42.86%": { transform: "scale(1.08)", opacity: "1" },
+          "85.71%": { transform: "scale(0.9)", opacity: "0.72" },
+          "100%": { transform: "scale(0.9)", opacity: "0.72" }
+        },
+        breatheBox: {
+          "0%": { transform: "scale(0.9)", opacity: "0.72" },
+          "25%": { transform: "scale(1.06)", opacity: "1" },
+          "50%": { transform: "scale(1.06)", opacity: "1" },
+          "75%": { transform: "scale(0.9)", opacity: "0.72" },
+          "100%": { transform: "scale(0.9)", opacity: "0.72" }
         }
       },
       animation: {
         fadeCalm: "fadeCalm 320ms cubic-bezier(0.22, 1, 0.36, 1) both",
         pulseSoft: "pulseSoft 3s ease-in-out infinite",
-        music: "music 2.8s ease-in-out infinite"
+        music: "music 2.8s ease-in-out infinite",
+        breatheSimple: "breatheSimple 8s ease-in-out infinite",
+        breatheCalm: "breatheCalm 14s ease-in-out infinite",
+        breatheBox: "breatheBox 16s ease-in-out infinite"
       }
     }
   },

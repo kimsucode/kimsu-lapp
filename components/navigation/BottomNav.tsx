@@ -5,8 +5,8 @@ import { usePathname } from "next/navigation";
 
 const tabs = [
   { href: "/", label: "Home" },
-  { href: "/archive", label: "Archive" },
-  { href: "/saved", label: "Saved" }
+  { href: "/focus", label: "Focus" },
+  { href: "/moodboard", label: "Ton moodboard" }
 ];
 
 function isHidden(pathname: string): boolean {
@@ -22,7 +22,7 @@ export function BottomNav() {
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-borderSubtle bg-surface/95 px-4 py-3 backdrop-blur-sm">
-      <div className="mx-auto flex w-full max-w-[460px] items-center justify-between rounded-full border border-borderSubtle/80 bg-[#14141b] px-3 py-2">
+      <div className="mx-auto flex w-full max-w-[460px] items-center justify-between rounded-full border border-borderSubtle/80 bg-[#14141b] px-2 py-2">
         {tabs.map((tab) => {
           const active = pathname === tab.href;
           return (
@@ -30,8 +30,8 @@ export function BottomNav() {
               key={tab.href}
               href={tab.href}
               className={active
-                ? "rounded-full bg-lavender/20 px-4 py-2 text-sm font-medium text-lavender transition-colors duration-300 ease-calm"
-                : "rounded-full px-4 py-2 text-sm text-textSecondary transition-colors duration-300 ease-calm hover:text-textPrimary"
+                ? "rounded-full bg-lavender/20 px-3 py-2 text-sm font-medium text-lavender transition-colors duration-300 ease-calm"
+                : "rounded-full px-3 py-2 text-sm text-textSecondary transition-colors duration-300 ease-calm hover:text-textPrimary"
               }
             >
               {tab.label}

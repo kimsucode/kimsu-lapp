@@ -11,7 +11,7 @@ export function QuoteCard({ quote }: Props) {
 
       <p className="quote-text">
         <span className="quote-mark" aria-hidden="true">
-          "
+          &ldquo;
         </span>
         {quote || "Aucune phrase pour aujourd'hui."}
       </p>

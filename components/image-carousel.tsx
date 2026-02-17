@@ -55,7 +55,7 @@ export function ImageCarousel({ images }: Props) {
         </>
       ) : (
         <p className="muted" style={{ margin: 0 }}>
-          Ajoute entre 3 et 10 images depuis l'admin.
+          Ajoute entre 3 et 10 images depuis l&apos;admin.
         </p>
       )}
     </section>

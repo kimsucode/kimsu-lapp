@@ -3,10 +3,9 @@ import { EditorialBlock } from "@/components/home/EditorialBlock";
 import { Footer } from "@/components/home/Footer";
 import { Header } from "@/components/home/Header";
 import { NowPlaying } from "@/components/home/NowPlaying";
-import { QuoteActions } from "@/components/home/QuoteActions";
-import { QuoteOfTheDay } from "@/components/home/QuoteOfTheDay";
+import { QuoteOfTheDayCard } from "@/components/home/QuoteOfTheDayCard";
 import { getArticlePreview } from "@/lib/article-preview";
-import { getAppSettings, getCarouselImages, getPublicImageUrl, isPhraseSaved } from "@/lib/data";
+import { getAppSettings, getCarouselImages, getPublicImageUrl } from "@/lib/data";
 import { getLatestPostFromFeed } from "@/lib/editorial-feed";
 
 function buildFallbackExcerpt(title: string | null): string {
@@ -24,9 +23,6 @@ export default async function HomePage() {
     id: image.id,
     url: getPublicImageUrl(image.storage_path)
   }));
-
-  const currentPhrase = settings?.quote_of_day?.trim() ?? null;
-  const initialPhraseSaved = currentPhrase ? await isPhraseSaved(currentPhrase) : false;
 
   const feedPost = await getLatestPostFromFeed(settings?.editorial_feed_url ?? null);
   const articleUrl = feedPost?.url ?? settings?.latest_article_url ?? null;
@@ -48,7 +44,7 @@ export default async function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#2B2139] via-plum to-[#181320] px-4 pb-10 pt-6 text-textPrimary">
       <div className="mx-auto flex w-full max-w-[460px] flex-col gap-7">
-        <Header appName="Kimsu Lab" dateLabel={dateLabel} />
+        <Header appName="Kimsu L'app" dateLabel={dateLabel} />
 
         <NowPlaying
           title={settings?.now_playing_title ?? null}
@@ -56,10 +52,7 @@ export default async function HomePage() {
           spotifyEmbedUrl={settings?.spotify_embed_url ?? null}
         />
 
-        <QuoteOfTheDay
-          quote={settings?.quote_of_day ?? null}
-          actions={<QuoteActions phrase={settings?.quote_of_day ?? null} initialSaved={initialPhraseSaved} />}
-        />
+        <QuoteOfTheDayCard quote={settings?.quote_of_day ?? null} />
 
         <Carousel images={imageUrls} />
 

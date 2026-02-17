@@ -16,7 +16,7 @@ Mini web-app mobile-first (PWA) avec une home publique et un admin privé.
 - Phrase du jour
 - Extrait du dernier article (auto via flux RSS/Atom ou fallback manuel)
 - Sauvegarde instantanée d'un "moment du jour" (rituel quotidien)
-- Toggle ♡ pour sauvegarder/retirer la phrase du jour
+- Quote of the Day Social: like public, partage natif, carte story PNG
 
 - Archive `/archive`
 - Liste des moments sauvegardés (du plus récent au plus ancien)
@@ -26,11 +26,19 @@ Mini web-app mobile-first (PWA) avec une home publique et un admin privé.
 - Liste des phrases sauvegardées
 - Retrait d'une phrase en un tap
 
+- Moodboard `/moodboard`
+- Toutes tes interactions likees (phrases, chansons, images)
+
+- Focus `/focus`
+- Session respiration minimaliste
+- Ambiance audio optionnelle
+
 - Admin `/admin`
 - Login par mot de passe simple
 - Mise à jour contenu Home
 - Réorganisation de l'ordre des sections de la home
 - Upload/suppression images carousel
+- Upload/suppression sons Focus
 - Bouton admin pour rafraîchir manuellement le flux éditorial
 
 ## Structure
@@ -39,6 +47,7 @@ Mini web-app mobile-first (PWA) avec une home publique et un admin privé.
 - `app/archive/page.tsx`: archive des moments
 - `app/archive/[id]/page.tsx`: détail d'un moment
 - `app/saved/page.tsx`: phrases sauvegardées
+- `app/focus/page.tsx`: mode focus/respiration
 - `app/admin/login/page.tsx`: login admin
 - `app/admin/page.tsx`: dashboard admin
 - `app/api/admin/*`: endpoints admin
@@ -83,6 +92,10 @@ npm install
   - `supabase/migrations/002_add_section_order.sql`
   - `supabase/migrations/003_add_editorial_feed.sql`
   - `supabase/migrations/004_add_moments_and_saved_phrases.sql`
+  - `supabase/migrations/005_quote_likes_and_shares.sql`
+  - `supabase/migrations/006_song_and_image_likes.sql`
+  - `supabase/migrations/007_add_focus_audio_tracks.sql`
+  - `supabase/migrations/008_song_likes_metadata.sql`
 
 3. Lancer l'app
 
@@ -95,6 +108,8 @@ npm run dev
 - Home: `http://localhost:3000`
 - Archive: `http://localhost:3000/archive`
 - Saved: `http://localhost:3000/saved`
+- Focus: `http://localhost:3000/focus`
+- Moodboard: `http://localhost:3000/moodboard`
 - Admin: `http://localhost:3000/admin`
 
 ## API endpoints
@@ -104,6 +119,14 @@ npm run dev
 - `GET /api/moments/[id]`
 - `POST /api/phrases/toggle`
 - `GET /api/phrases`
+- `GET /api/quote/likes?quote=...`
+- `POST /api/quote/likes/toggle`
+- `POST /api/quote/share-event`
+- `GET /api/now-playing/likes?songKey=...`
+- `POST /api/now-playing/likes/toggle`
+- `GET /api/images/likes?imageId=...`
+- `POST /api/images/likes/toggle`
+- `GET /api/moodboard`
 
 ## Usage (Rituel quotidien)
 
@@ -141,3 +164,49 @@ Tu peux aussi envoyer le secret dans le header `x-webhook-secret`.
 
 - Auth admin par mot de passe unique + cookie httpOnly signé
 - Pour la phase suivante: migrer vers Supabase Auth (users/roles)
+
+## Mode Focus (/focus)
+
+Le mode Focus est local (pas de backend) et propose:
+
+- animation respiration (Simple / Calm 4-2-6-2 / Box 4-4-4-4)
+- presets de session (1 min / 3 min / 5 min)
+- player audio optionnel (Play/Pause, choix de piste, volume)
+- persistance locale du son selectionne + volume via `localStorage`
+
+### Audio files
+
+Tu peux maintenant gérer les sons directement depuis `/admin` (section **Sons Focus**):
+
+- upload d'un fichier audio
+- label du son
+- ordre d'affichage
+- suppression
+
+Fallback: si aucun son n'est uploadé, l'app utilise les 3 fichiers de `public/audio/`.
+
+### Test rapide
+
+1. Ouvrir `http://localhost:3000/focus`
+2. Cliquer `Start` pour lancer la respiration puis `Pause`
+3. Tester les presets 1/3/5 min
+4. Ouvrir les parametres et changer le pattern
+5. Lancer l'audio, changer de piste, ajuster le volume
+6. Recharger la page: piste et volume doivent etre conserves
+
+## Quote of the Day Social
+
+La card phrase du jour supporte maintenant:
+
+- Like public (compteur global par phrase)
+- Toggle like anonyme via fingerprint localStorage
+- Partage natif via Web Share API quand disponible
+- Generation d'une image Story 1080x1920 (PNG)
+
+### Partage et fallback
+
+- `Share`: ouvre la feuille de partage native quand possible.
+- Si indisponible: copie du lien dans le presse-papiers.
+- `Story`: genere une image PNG.
+- Si `navigator.share` supporte les fichiers: partage direct de l'image.
+- Sinon: telechargement de l'image pour ajout manuel en story.

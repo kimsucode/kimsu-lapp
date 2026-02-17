@@ -1,6 +1,6 @@
 import { parisDayISO } from "@/lib/date";
 import { getSupabaseServerClient } from "@/lib/supabase-server";
-import type { AppSettings, CarouselImage, Moment, SavedPhrase } from "@/types/content";
+import type { AppSettings, CarouselImage, FocusAudioTrack, Moment, SavedPhrase } from "@/types/content";
 
 function isMissingAppSettingsColumn(message: string): boolean {
   return (
@@ -63,6 +63,36 @@ export async function getCarouselImages(): Promise<CarouselImage[]> {
   }
 
   return data ?? [];
+}
+
+export async function getFocusAudioTracks(): Promise<FocusAudioTrack[]> {
+  const supabase = getSupabaseServerClient();
+
+  const { data, error } = await supabase
+    .from("focus_audio_tracks")
+    .select("id, label, storage_path, sort_order, created_at")
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    if (error.message.includes("focus_audio_tracks")) {
+      return [];
+    }
+
+    throw new Error(`Failed to load focus audio tracks: ${error.message}`);
+  }
+
+  return data ?? [];
+}
+
+export function getPublicFocusAudioUrl(storagePath: string): string {
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+  if (!base) {
+    return "";
+  }
+
+  return `${base}/storage/v1/object/public/focus-audio/${storagePath}`;
 }
 
 export function getPublicImageUrl(storagePath: string): string {

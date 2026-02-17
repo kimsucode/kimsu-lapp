@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-
 import { ADMIN_COOKIE_NAME, isValidAdminSession } from "@/lib/auth";
 
 function isAdminLoginPath(pathname: string): boolean {
   return pathname === "/admin/login" || pathname === "/api/admin/login";
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  const targetsAdmin = pathname.startsWith("/admin") || pathname.startsWith("/api/admin");
+  const targetsAdmin =
+    pathname.startsWith("/admin") || pathname.startsWith("/api/admin");
 
   if (!targetsAdmin || isAdminLoginPath(pathname)) {
     return NextResponse.next();
@@ -17,7 +17,9 @@ export function middleware(request: NextRequest) {
 
   const session = request.cookies.get(ADMIN_COOKIE_NAME)?.value;
 
-  if (!isValidAdminSession(session)) {
+  const ok = await isValidAdminSession(session);
+
+  if (!ok) {
     if (pathname.startsWith("/api/admin")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -33,5 +35,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/admin/:path*"]
+  matcher: ["/admin/:path*", "/api/admin/:path*"],
 };

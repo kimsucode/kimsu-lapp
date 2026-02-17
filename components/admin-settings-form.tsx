@@ -2,52 +2,21 @@
 
 import { FormEvent, useState } from "react";
 
-import { DEFAULT_HOME_SECTION_ORDER } from "@/lib/sections";
-import type { HomeSectionKey } from "@/types/content";
-
 type Props = {
   initialValues: {
-    now_playing_title: string;
-    now_playing_artist: string;
     spotify_embed_url: string;
     quote_of_day: string;
     latest_article_url: string;
     editorial_feed_url: string;
-    section_order: HomeSectionKey[];
   };
 };
-
-const sectionLabels: Record<HomeSectionKey, string> = {
-  now_playing: "Now Playing",
-  carousel: "Carousel",
-  quote: "Phrase du jour",
-  latest_article: "Dernier article"
-};
-
-function moveItem(order: HomeSectionKey[], index: number, direction: -1 | 1): HomeSectionKey[] {
-  const nextIndex = index + direction;
-  if (nextIndex < 0 || nextIndex >= order.length) {
-    return order;
-  }
-
-  const copy = [...order];
-  const [item] = copy.splice(index, 1);
-  copy.splice(nextIndex, 0, item);
-  return copy;
-}
 
 function inputClassName() {
   return "w-full rounded-xl border border-borderSubtle bg-[#14141c] px-3 py-2.5 text-sm text-textPrimary placeholder:text-textMuted focus:border-lavender/45 focus:outline-none";
 }
 
 export function AdminSettingsForm({ initialValues }: Props) {
-  const [values, setValues] = useState({
-    ...initialValues,
-    section_order:
-      initialValues.section_order.length === DEFAULT_HOME_SECTION_ORDER.length
-        ? initialValues.section_order
-        : DEFAULT_HOME_SECTION_ORDER
-  });
+  const [values, setValues] = useState(initialValues);
   const [message, setMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshingFeed, setIsRefreshingFeed] = useState(false);
@@ -96,37 +65,12 @@ export function AdminSettingsForm({ initialValues }: Props) {
     <section className="rounded-soft border border-borderSubtle bg-surface p-4 shadow-soft sm:p-5">
       <div className="mb-4">
         <h2 className="text-lg font-semibold">Contenu Home</h2>
-        <p className="mt-1 text-sm text-textSecondary">Paramètres éditoriaux et ordre d'affichage.</p>
+        <p className="mt-1 text-sm text-textSecondary">Paramètres éditoriaux.</p>
       </div>
 
       <form onSubmit={onSubmit} className="space-y-4">
         <div className="space-y-3 rounded-2xl border border-borderSubtle/70 bg-[#121219] p-3 sm:p-4">
           <p className="text-xs uppercase tracking-[0.12em] text-textMuted">Now Playing</p>
-
-          <div>
-            <label htmlFor="song-title" className="mb-1.5 block text-sm text-textSecondary">
-              Titre du morceau
-            </label>
-            <input
-              id="song-title"
-              className={inputClassName()}
-              value={values.now_playing_title}
-              onChange={(event) => setValues((v) => ({ ...v, now_playing_title: event.target.value }))}
-            />
-          </div>
-
-          <div>
-            <label htmlFor="song-artist" className="mb-1.5 block text-sm text-textSecondary">
-              Artiste
-            </label>
-            <input
-              id="song-artist"
-              className={inputClassName()}
-              value={values.now_playing_artist}
-              onChange={(event) => setValues((v) => ({ ...v, now_playing_artist: event.target.value }))}
-            />
-          </div>
-
           <div>
             <label htmlFor="spotify" className="mb-1.5 block text-sm text-textSecondary">
               Lien Spotify
@@ -142,7 +86,7 @@ export function AdminSettingsForm({ initialValues }: Props) {
         </div>
 
         <div className="space-y-3 rounded-2xl border border-borderSubtle/70 bg-[#121219] p-3 sm:p-4">
-          <p className="text-xs uppercase tracking-[0.12em] text-textMuted">Editorial</p>
+          <p className="text-xs uppercase tracking-[0.12em] text-textMuted">Éditorial</p>
 
           <div>
             <label htmlFor="quote" className="mb-1.5 block text-sm text-textSecondary">
@@ -193,47 +137,6 @@ export function AdminSettingsForm({ initialValues }: Props) {
                 {isRefreshingFeed ? "Rafraîchissement..." : "Rafraîchir le flux éditorial"}
               </button>
             </div>
-          </div>
-        </div>
-
-        <div className="space-y-3 rounded-2xl border border-borderSubtle/70 bg-[#121219] p-3 sm:p-4">
-          <p className="text-xs uppercase tracking-[0.12em] text-textMuted">Ordre des sections</p>
-          <div className="space-y-2">
-            {values.section_order.map((section, index) => (
-              <div
-                key={section}
-                className="flex items-center gap-2 rounded-xl border border-borderSubtle bg-[#171720] p-2"
-              >
-                <span className="min-w-[24px] text-center text-xs text-textMuted">{index + 1}</span>
-                <span className="flex-1 text-sm text-textPrimary">{sectionLabels[section]}</span>
-                <button
-                  type="button"
-                  className="rounded-full border border-borderSubtle px-3 py-1.5 text-xs text-textSecondary hover:text-textPrimary disabled:opacity-40"
-                  onClick={() =>
-                    setValues((v) => ({
-                      ...v,
-                      section_order: moveItem(v.section_order, index, -1)
-                    }))
-                  }
-                  disabled={index === 0}
-                >
-                  Monter
-                </button>
-                <button
-                  type="button"
-                  className="rounded-full border border-borderSubtle px-3 py-1.5 text-xs text-textSecondary hover:text-textPrimary disabled:opacity-40"
-                  onClick={() =>
-                    setValues((v) => ({
-                      ...v,
-                      section_order: moveItem(v.section_order, index, 1)
-                    }))
-                  }
-                  disabled={index === values.section_order.length - 1}
-                >
-                  Descendre
-                </button>
-              </div>
-            ))}
           </div>
         </div>
 

@@ -6,8 +6,8 @@ type ThemeName = "warm" | "editorial" | "minimal-pop";
 
 const themes: Array<{ id: ThemeName; label: string; description: string }> = [
   { id: "warm", label: "Warm", description: "Chaleureux, organique, cosy." },
-  { id: "editorial", label: "Editorial", description: "Magazine, chic, contrasté." },
-  { id: "minimal-pop", label: "Minimal Pop", description: "Net, coloré, moderne." }
+  { id: "editorial", label: "Editorial", description: "Magazine, chic, contraste." },
+  { id: "minimal-pop", label: "Minimal Pop", description: "Net, colore, moderne." }
 ];
 
 export function StylePreviewLab() {
@@ -52,17 +52,17 @@ export function StylePreviewLab() {
       <section className="preview-card preview-quote">
         <p className="preview-badge">Phrase du jour</p>
         <p className="preview-quote-text">
-          "On a beau se préparer à l'échec, il nous apprend toujours quelque chose de neuf."
+          &ldquo;On a beau se préparer à l&apos;échec, il nous apprend toujours quelque chose de neuf.&rdquo;
         </p>
       </section>
 
       <section className="preview-card">
         <p className="preview-kicker">Dernier article</p>
         <h2 className="preview-h2">Pourquoi créer malgré le doute</h2>
-        <p className="preview-muted">Publié le {today} · par Caroline</p>
+        <p className="preview-muted">Publie le {today} · par Caroline</p>
         <p className="preview-body">
-          Quand le doute s'installe, c'est souvent le signal d'une transition. Cet article partage une méthode simple
-          pour garder le cap sans s'épuiser.
+          Quand le doute s&apos;installe, c&apos;est souvent le signal d&apos;une transition. Cet article partage une méthode simple
+          pour garder le cap sans s&apos;épuiser.
         </p>
       </section>
     </main>

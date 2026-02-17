@@ -1,4 +1,9 @@
-import MusicWave from "@/components/home/MusicWave";
+"use client";
+
+import { Heart } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+
+import { getOrCreateFingerprint } from "@/lib/client/fingerprint";
 
 type Props = {
   title: string | null;
@@ -6,28 +11,152 @@ type Props = {
   spotifyEmbedUrl: string | null;
 };
 
+type LikesPayload = {
+  count: number;
+  likedByMe: boolean;
+};
+
+type SongKeyPayload = {
+  title: string;
+  artist: string;
+  spotify: string;
+};
+
+function buildSongKey(title: string | null, artist: string | null, spotifyEmbedUrl: string | null): string {
+  const payload: SongKeyPayload = {
+    title: title?.trim() ?? "",
+    artist: artist?.trim() ?? "",
+    spotify: spotifyEmbedUrl?.trim() ?? ""
+  };
+
+  if (!payload.title && !payload.artist && !payload.spotify) {
+    return "";
+  }
+
+  return JSON.stringify(payload);
+}
+
 export function NowPlaying({ title, artist, spotifyEmbedUrl }: Props) {
+  const songKey = useMemo(() => buildSongKey(title, artist, spotifyEmbedUrl), [title, artist, spotifyEmbedUrl]);
+
+  const [fingerprint, setFingerprint] = useState("");
+  const [likesCount, setLikesCount] = useState(0);
+  const [likedByMe, setLikedByMe] = useState(false);
+  const [loadingLikes, setLoadingLikes] = useState(true);
+  const [isTogglingLike, setIsTogglingLike] = useState(false);
+
+  useEffect(() => {
+    setFingerprint(getOrCreateFingerprint());
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadLikes() {
+      if (!songKey) {
+        setLoadingLikes(false);
+        return;
+      }
+
+      setLoadingLikes(true);
+      const response = await fetch(`/api/now-playing/likes?songKey=${encodeURIComponent(songKey)}`, {
+        headers: fingerprint ? { "x-fingerprint": fingerprint } : undefined
+      }).catch(() => null);
+
+      if (!response || !response.ok) {
+        if (!cancelled) setLoadingLikes(false);
+        return;
+      }
+
+      const payload = (await response.json()) as LikesPayload;
+      if (!cancelled) {
+        setLikesCount(payload.count);
+        setLikedByMe(payload.likedByMe);
+        setLoadingLikes(false);
+      }
+    }
+
+    void loadLikes();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [songKey, fingerprint]);
+
+  async function onToggleLike() {
+    if (!songKey || !fingerprint || isTogglingLike || loadingLikes) return;
+
+    setIsTogglingLike(true);
+
+    const prevLiked = likedByMe;
+    const prevCount = likesCount;
+    const nextLiked = !prevLiked;
+    const nextCount = Math.max(0, prevCount + (nextLiked ? 1 : -1));
+
+    setLikedByMe(nextLiked);
+    setLikesCount(nextCount);
+
+    const response = await fetch("/api/now-playing/likes/toggle", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-fingerprint": fingerprint
+      },
+      body: JSON.stringify({
+        songKey,
+        title,
+        artist
+      })
+    }).catch(() => null);
+
+    if (!response || !response.ok) {
+      setLikedByMe(prevLiked);
+      setLikesCount(prevCount);
+      setIsTogglingLike(false);
+      return;
+    }
+
+    const payload = (await response.json()) as LikesPayload;
+    setLikedByMe(payload.likedByMe);
+    setLikesCount(payload.count);
+    setIsTogglingLike(false);
+  }
+
   return (
-    <section className="animate-fadeCalm rounded-soft border border-borderSubtle bg-surface px-4 py-4 shadow-soft transition-all duration-300 ease-calm" style={{ animationDelay: "40ms" }}>
-      <p className="text-[11px] uppercase tracking-[0.15em] text-textMuted">Now playing</p>
-
-      <div className="mt-3 flex items-center gap-3">
-        <MusicWave isPlaying={Boolean(spotifyEmbedUrl)} />
-
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium text-textPrimary">{title || "Titre à définir"}</p>
-          <p className="truncate text-sm text-textSecondary">{artist || "Artiste à définir"}</p>
+    <section
+      className="animate-fadeCalm rounded-soft border border-borderSubtle bg-surface px-4 py-4 shadow-soft transition-all duration-300 ease-calm"
+      style={{ animationDelay: "40ms" }}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <p className="text-[11px] uppercase tracking-[0.15em] text-textMuted">Now playing</p>
+          {likesCount > 0 ? <p className="text-xs text-textSecondary">{likesCount}</p> : null}
         </div>
 
-        <div className="flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full bg-lavender/80 animate-pulseSoft" />
-          <span className="h-2 w-2 rounded-full bg-rose/70 animate-pulseSoft" style={{ animationDelay: "250ms" }} />
-          <span className="h-2 w-2 rounded-full bg-mint/70 animate-pulseSoft" style={{ animationDelay: "500ms" }} />
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onToggleLike}
+            disabled={!songKey || loadingLikes || isTogglingLike}
+            className={likedByMe
+              ? "inline-flex items-center gap-1.5 rounded-full border border-lavender/45 bg-lavender/20 px-2.5 py-1 text-xs text-lavender transition-all duration-300 ease-calm"
+              : "inline-flex items-center gap-1.5 rounded-full border border-borderSubtle bg-[#191922] px-2.5 py-1 text-xs text-textSecondary transition-all duration-300 ease-calm hover:border-lavender/35 hover:text-lavender"
+            }
+            aria-label={likedByMe ? "Retirer le like du morceau" : "Liker le morceau"}
+          >
+            <Heart className={`h-3.5 w-3.5 ${likedByMe ? "fill-current" : ""}`} />
+            <span>Like</span>
+          </button>
+
+          <div className="inline-flex items-center gap-2 rounded-full border border-rose/35 bg-rose/12 px-2.5 py-1">
+            <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+            <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#FFDDE7]">Live</span>
+          </div>
         </div>
       </div>
 
       {spotifyEmbedUrl ? (
-        <div className="mt-4 overflow-hidden rounded-2xl border border-borderSubtle/70">
+        <div className="mt-3 overflow-hidden rounded-2xl border border-borderSubtle/70">
           <iframe
             title="Spotify player"
             src={spotifyEmbedUrl}
@@ -38,7 +167,9 @@ export function NowPlaying({ title, artist, spotifyEmbedUrl }: Props) {
             className="block border-0"
           />
         </div>
-      ) : null}
+      ) : (
+        <p className="mt-3 text-sm text-textSecondary">Ajoute un lien Spotify depuis l&apos;admin.</p>
+      )}
     </section>
   );
 }
