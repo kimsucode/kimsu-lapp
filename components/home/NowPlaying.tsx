@@ -30,9 +30,8 @@ function toAppleMusicEmbedUrl(input: string | null | undefined): string | null {
 
   try {
     const url = new URL(raw);
-
     if (url.hostname.includes("itunes.apple.com")) {
-      return null;
+      url.hostname = "music.apple.com";
     }
 
     if (!url.hostname.includes("music.apple.com") && !url.hostname.includes("embed.music.apple.com")) {

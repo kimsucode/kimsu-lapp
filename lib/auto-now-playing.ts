@@ -107,12 +107,13 @@ function getLatestTrack(payload: LastFmPayload): LastFmTrack | null {
 
 async function findAppleMusicUrl(title: string, artist: string): Promise<string | null> {
   const term = encodeURIComponent(`${artist} ${title}`);
-  const url = `https://itunes.apple.com/search?term=${term}&entity=song&limit=10`;
+  const url = `https://itunes.apple.com/search?term=${term}&entity=song&limit=15`;
   const payload = await fetchJsonWithTimeout<ITunesPayload>(url, 3500);
   if (!payload?.results?.length) return null;
 
   let bestUrl: string | null = null;
   let bestScore = 0;
+  let fallbackUrl: string | null = null;
 
   for (const item of payload.results) {
     const trackName = asNonEmpty(item.trackName);
@@ -120,6 +121,7 @@ async function findAppleMusicUrl(title: string, artist: string): Promise<string 
     const trackUrl = asNonEmpty(item.trackViewUrl);
 
     if (!trackName || !artistName || !trackUrl) continue;
+    if (!fallbackUrl) fallbackUrl = trackUrl;
 
     const titleScore = similarityScore(title, trackName);
     const artistScore = similarityScore(artist, artistName);
@@ -131,11 +133,15 @@ async function findAppleMusicUrl(title: string, artist: string): Promise<string 
     }
   }
 
-  if (bestScore < 0.72) {
-    return null;
+  if (bestUrl && bestScore >= 0.72) {
+    return bestUrl;
   }
 
-  return bestUrl;
+  if (bestUrl && bestScore >= 0.56) {
+    return bestUrl;
+  }
+
+  return fallbackUrl;
 }
 
 export async function getAutoNowPlayingFromLastFm(): Promise<AutoNowPlaying | null> {
