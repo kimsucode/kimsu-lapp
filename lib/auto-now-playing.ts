@@ -1,6 +1,9 @@
 import "server-only";
 
-import { resolveAppleMusicToSpotifyEmbedUrl } from "@/lib/spotify";
+import {
+  fetchSpotifyTitleArtist,
+  resolveAppleMusicToSpotifyEmbedUrl
+} from "@/lib/spotify";
 
 type AutoNowPlaying = {
   title: string | null;
@@ -31,6 +34,54 @@ type ITunesPayload = {
 function asNonEmpty(value: string | null | undefined): string | null {
   const trimmed = value?.trim() ?? "";
   return trimmed ? trimmed : null;
+}
+
+function normalizeForMatch(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\b(feat|featuring|ft|remaster(?:ed)?|live|version|edit|mix)\b/g, " ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function toTokenSet(value: string): Set<string> {
+  return new Set(
+    normalizeForMatch(value)
+      .split(" ")
+      .map((token) => token.trim())
+      .filter((token) => token.length >= 2)
+  );
+}
+
+function tokenCoverage(a: Set<string>, b: Set<string>): number {
+  if (!a.size || !b.size) return 0;
+
+  let shared = 0;
+  for (const token of a) {
+    if (b.has(token)) shared += 1;
+  }
+
+  return shared / Math.max(a.size, b.size);
+}
+
+function similarityScore(expected: string, candidate: string): number {
+  const a = normalizeForMatch(expected);
+  const b = normalizeForMatch(candidate);
+
+  if (!a || !b) return 0;
+  if (a === b) return 1;
+  if (a.includes(b) || b.includes(a)) return 0.9;
+
+  return tokenCoverage(toTokenSet(a), toTokenSet(b));
+}
+
+function isStrongMatch(expectedTitle: string, expectedArtist: string, gotTitle: string, gotArtist: string): boolean {
+  const title = similarityScore(expectedTitle, gotTitle);
+  const artist = similarityScore(expectedArtist, gotArtist);
+
+  return title >= 0.7 && artist >= 0.5;
 }
 
 async function fetchJsonWithTimeout<T>(url: string, timeoutMs = 4500): Promise<T | null> {
@@ -67,16 +118,35 @@ function getLatestTrack(payload: LastFmPayload): LastFmTrack | null {
 
 async function findAppleMusicUrl(title: string, artist: string): Promise<string | null> {
   const term = encodeURIComponent(`${artist} ${title}`);
-  const url = `https://itunes.apple.com/search?term=${term}&entity=song&limit=5`;
+  const url = `https://itunes.apple.com/search?term=${term}&entity=song&limit=10`;
   const payload = await fetchJsonWithTimeout<ITunesPayload>(url, 3500);
   if (!payload?.results?.length) return null;
 
-  const normalizedArtist = artist.toLowerCase();
-  const candidate = payload.results.find((item) =>
-    (item.artistName ?? "").toLowerCase().includes(normalizedArtist)
-  ) ?? payload.results[0];
+  let bestUrl: string | null = null;
+  let bestScore = 0;
 
-  return asNonEmpty(candidate?.trackViewUrl);
+  for (const item of payload.results) {
+    const trackName = asNonEmpty(item.trackName);
+    const artistName = asNonEmpty(item.artistName);
+    const trackUrl = asNonEmpty(item.trackViewUrl);
+
+    if (!trackName || !artistName || !trackUrl) continue;
+
+    const titleScore = similarityScore(title, trackName);
+    const artistScore = similarityScore(artist, artistName);
+    const score = titleScore * 0.65 + artistScore * 0.35;
+
+    if (score > bestScore) {
+      bestScore = score;
+      bestUrl = trackUrl;
+    }
+  }
+
+  if (bestScore < 0.72) {
+    return null;
+  }
+
+  return bestUrl;
 }
 
 export async function getAutoNowPlayingFromLastFm(): Promise<AutoNowPlaying | null> {
@@ -99,9 +169,21 @@ export async function getAutoNowPlayingFromLastFm(): Promise<AutoNowPlaying | nu
   if (!title || !artist) return null;
 
   const appleMusicUrl = await findAppleMusicUrl(title, artist);
-  const spotifyEmbedUrl = appleMusicUrl
+  const rawSpotifyEmbedUrl = appleMusicUrl
     ? await resolveAppleMusicToSpotifyEmbedUrl(appleMusicUrl)
     : null;
+
+  let spotifyEmbedUrl: string | null = null;
+
+  if (rawSpotifyEmbedUrl) {
+    const spotifyMeta = await fetchSpotifyTitleArtist(rawSpotifyEmbedUrl);
+    const spotifyTitle = asNonEmpty(spotifyMeta.title);
+    const spotifyArtist = asNonEmpty(spotifyMeta.artist);
+
+    if (spotifyTitle && spotifyArtist && isStrongMatch(title, artist, spotifyTitle, spotifyArtist)) {
+      spotifyEmbedUrl = rawSpotifyEmbedUrl;
+    }
+  }
 
   return {
     title,
