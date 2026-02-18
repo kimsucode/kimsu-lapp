@@ -5,6 +5,7 @@ import { Header } from "@/components/home/Header";
 import { NowPlaying } from "@/components/home/NowPlaying";
 import { QuoteOfTheDayCard } from "@/components/home/QuoteOfTheDayCard";
 import { getArticlePreview } from "@/lib/article-preview";
+import { getAutoNowPlayingFromLastFm } from "@/lib/auto-now-playing";
 import { getAppSettings, getCarouselImages, getPublicImageUrl } from "@/lib/data";
 import { getLatestPostFromFeed } from "@/lib/editorial-feed";
 
@@ -17,7 +18,11 @@ function buildFallbackExcerpt(title: string | null): string {
 }
 
 export default async function HomePage() {
-  const [settings, images] = await Promise.all([getAppSettings(), getCarouselImages()]);
+  const [settings, images, autoNowPlaying] = await Promise.all([
+    getAppSettings(),
+    getCarouselImages(),
+    getAutoNowPlayingFromLastFm()
+  ]);
 
   const imageUrls = images.map((image) => ({
     id: image.id,
@@ -47,9 +52,9 @@ export default async function HomePage() {
         <Header appName="Kimsu L'app" dateLabel={dateLabel} />
 
         <NowPlaying
-          title={settings?.now_playing_title ?? null}
-          artist={settings?.now_playing_artist ?? null}
-          spotifyEmbedUrl={settings?.spotify_embed_url ?? null}
+          title={autoNowPlaying?.title ?? settings?.now_playing_title ?? null}
+          artist={autoNowPlaying?.artist ?? settings?.now_playing_artist ?? null}
+          spotifyEmbedUrl={autoNowPlaying?.spotifyEmbedUrl ?? settings?.spotify_embed_url ?? null}
         />
 
         <QuoteOfTheDayCard quote={settings?.quote_of_day ?? null} />
