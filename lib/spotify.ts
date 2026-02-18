@@ -10,6 +10,14 @@ type SpotifyTitleArtist = {
   artist: string | null;
 };
 
+type SongLinkPayload = {
+  linksByPlatform?: {
+    spotify?: {
+      url?: string;
+    };
+  };
+};
+
 function cleanId(value: string): string {
   return value.trim().split(/[?&#]/)[0] ?? "";
 }
@@ -36,6 +44,16 @@ function splitTitleArtist(raw: string): SpotifyTitleArtist {
   }
 
   return { title: normalized, artist: null };
+}
+
+function isAppleMusicUrl(input: string): boolean {
+  try {
+    const url = new URL(input);
+    const hostname = url.hostname.toLowerCase();
+    return hostname.includes("music.apple.com") || hostname.includes("itunes.apple.com");
+  } catch {
+    return false;
+  }
 }
 
 export function toSpotifyEmbedUrl(input: string | null | undefined): string | null {
@@ -90,6 +108,30 @@ export function toSpotifyEmbedUrl(input: string | null | undefined): string | nu
   if (!ALLOWED_TYPES.has(type) || !id) return null;
 
   return `https://open.spotify.com/embed/${type}/${id}`;
+}
+
+export async function resolveAppleMusicToSpotifyEmbedUrl(input: string | null | undefined): Promise<string | null> {
+  const raw = input?.trim() ?? "";
+  if (!raw) return null;
+  if (!isAppleMusicUrl(raw)) return null;
+
+  try {
+    const response = await fetch(`https://api.song.link/v1-alpha.1/links?url=${encodeURIComponent(raw)}`, {
+      method: "GET",
+      headers: { Accept: "application/json" },
+      cache: "no-store"
+    });
+
+    if (!response.ok) return null;
+
+    const payload = (await response.json()) as SongLinkPayload;
+    const spotifyUrl = payload.linksByPlatform?.spotify?.url;
+    if (!spotifyUrl) return null;
+
+    return toSpotifyEmbedUrl(spotifyUrl);
+  } catch {
+    return null;
+  }
 }
 
 export function parseSpotifyUrls(input: string | null | undefined): ParsedSpotify | null {

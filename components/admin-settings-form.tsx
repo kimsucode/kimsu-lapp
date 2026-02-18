@@ -5,6 +5,7 @@ import { FormEvent, useState } from "react";
 type Props = {
   initialValues: {
     spotify_embed_url: string;
+    apple_music_url: string;
     quote_of_day: string;
     latest_article_url: string;
     editorial_feed_url: string;
@@ -82,6 +83,22 @@ export function AdminSettingsForm({ initialValues }: Props) {
               value={values.spotify_embed_url}
               onChange={(event) => setValues((v) => ({ ...v, spotify_embed_url: event.target.value }))}
             />
+          </div>
+
+          <div>
+            <label htmlFor="appleMusic" className="mb-1.5 block text-sm text-textSecondary">
+              Lien Apple Music (conversion auto vers Spotify)
+            </label>
+            <input
+              id="appleMusic"
+              className={inputClassName()}
+              placeholder="https://music.apple.com/..."
+              value={values.apple_music_url}
+              onChange={(event) => setValues((v) => ({ ...v, apple_music_url: event.target.value }))}
+            />
+            <p className="mt-1 text-xs text-textMuted">
+              Si le champ Spotify est vide, l&apos;app tentera de convertir automatiquement ce lien en Spotify.
+            </p>
           </div>
         </div>
 

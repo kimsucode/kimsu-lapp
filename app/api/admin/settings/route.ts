@@ -2,13 +2,14 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
 import { normalizeHomeSectionOrder } from "@/lib/sections";
-import { toSpotifyEmbedUrl } from "@/lib/spotify";
+import { resolveAppleMusicToSpotifyEmbedUrl, toSpotifyEmbedUrl } from "@/lib/spotify";
 import { getSupabaseServerClient } from "@/lib/supabase-server";
 
 type SettingsPayload = {
   now_playing_title?: string;
   now_playing_artist?: string;
   spotify_embed_url?: string;
+  apple_music_url?: string;
   quote_of_day?: string;
   latest_article_url?: string;
   editorial_feed_url?: string;
@@ -35,11 +36,25 @@ export async function POST(request: NextRequest) {
   const body = (await request.json()) as SettingsPayload;
 
   const rawSpotify = asNullable(body.spotify_embed_url);
-  const spotifyEmbedUrl = rawSpotify ? toSpotifyEmbedUrl(rawSpotify) : null;
+  const rawAppleMusic = asNullable(body.apple_music_url);
 
-  if (rawSpotify && !spotifyEmbedUrl) {
+  const parsedSpotify = rawSpotify ? toSpotifyEmbedUrl(rawSpotify) : null;
+  let spotifyEmbedUrl = parsedSpotify;
+
+  if (!spotifyEmbedUrl && rawAppleMusic) {
+    spotifyEmbedUrl = await resolveAppleMusicToSpotifyEmbedUrl(rawAppleMusic);
+  }
+
+  if (rawSpotify && !parsedSpotify && !rawAppleMusic) {
     return NextResponse.json(
       { error: "Lien Spotify invalide. Utilise un lien track/album/playlist Spotify." },
+      { status: 400 }
+    );
+  }
+
+  if (rawAppleMusic && !spotifyEmbedUrl && !parsedSpotify) {
+    return NextResponse.json(
+      { error: "Impossible de convertir ce lien Apple Music vers Spotify. Vérifie l'URL puis réessaie." },
       { status: 400 }
     );
   }
