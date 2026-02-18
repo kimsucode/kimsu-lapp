@@ -4,9 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const tabs = [
-  { href: "/", label: "Home", mobileLabel: "Home" },
-  { href: "/focus", label: "Focus", mobileLabel: "Focus" },
-  { href: "/moodboard", label: "Ton moodboard", mobileLabel: "Moodboard" }
+  { href: "/", label: "Home" },
+  { href: "/focus", label: "Focus" },
+  { href: "/moodboard", label: "Moodboard" }
 ];
 
 function isHidden(pathname: string): boolean {
@@ -30,12 +30,11 @@ export function BottomNav() {
               key={tab.href}
               href={tab.href}
               className={active
-                ? "rounded-full border border-lavender/35 bg-lavender/20 px-2 py-2 text-center text-[0.95rem] font-medium text-lavender shadow-[0_0_0_1px_rgba(255,255,255,0.02)] transition-colors duration-300 ease-calm sm:px-3 sm:text-base"
-                : "rounded-full border border-transparent px-2 py-2 text-center text-[0.95rem] text-textSecondary transition-colors duration-300 ease-calm hover:text-textPrimary sm:px-3 sm:text-base"
+                ? "whitespace-nowrap rounded-full border border-lavender/35 bg-lavender/20 px-2 py-2 text-center text-[0.95rem] font-medium text-lavender shadow-[0_0_0_1px_rgba(255,255,255,0.02)] transition-colors duration-300 ease-calm sm:px-3 sm:text-base"
+                : "whitespace-nowrap rounded-full border border-transparent px-2 py-2 text-center text-[0.95rem] text-textSecondary transition-colors duration-300 ease-calm hover:text-textPrimary sm:px-3 sm:text-base"
               }
             >
-              <span className="sm:hidden whitespace-nowrap">{tab.mobileLabel}</span>
-              <span className="hidden sm:inline">{tab.label}</span>
+              {tab.label}
             </Link>
           );
         })}
