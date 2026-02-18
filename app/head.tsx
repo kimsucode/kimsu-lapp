@@ -1,7 +1,7 @@
 export default function Head() {
   const title = "Kimsu l'App";
   const description = "Une app chill pour les gens chill.";
-  const image = "https://kimsu-lapp.vercel.app/og-image.png";
+  const image = "https://kimsu-lapp.vercel.app/opengraph-image.png";
   const url = "https://kimsu-lapp.vercel.app/";
 
   return (
@@ -14,8 +14,8 @@ export default function Head() {
       <meta property="og:description" content={description} />
       <meta property="og:url" content={url} />
       <meta property="og:image" content={image} />
-      <meta property="og:image:width" content="1024" />
-      <meta property="og:image:height" content="1024" />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
       <meta property="og:image:alt" content="Kimsu logo" />
 
       <meta name="twitter:card" content="summary_large_image" />
