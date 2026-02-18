@@ -4,6 +4,7 @@ type AutoNowPlaying = {
   title: string | null;
   artist: string | null;
   appleMusicUrl: string | null;
+  artworkUrl: string | null;
   spotifyEmbedUrl: string | null;
 };
 
@@ -24,7 +25,13 @@ type ITunesPayload = {
     trackViewUrl?: string;
     artistName?: string;
     trackName?: string;
+    artworkUrl100?: string;
   }>;
+};
+
+type AppleMatch = {
+  url: string | null;
+  artworkUrl: string | null;
 };
 
 function asNonEmpty(value: string | null | undefined): string | null {
@@ -73,6 +80,12 @@ function similarityScore(expected: string, candidate: string): number {
   return tokenCoverage(toTokenSet(a), toTokenSet(b));
 }
 
+function toHiResArtwork(url: string | null): string | null {
+  if (!url) return null;
+
+  return url.replace(/\/[0-9]+x[0-9]+bb\./, "/600x600bb.");
+}
+
 async function fetchJsonWithTimeout<T>(url: string, timeoutMs = 4500): Promise<T | null> {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeoutMs);
@@ -105,23 +118,29 @@ function getLatestTrack(payload: LastFmPayload): LastFmTrack | null {
   return current ?? tracks[0] ?? null;
 }
 
-async function findAppleMusicUrl(title: string, artist: string): Promise<string | null> {
+async function findAppleMusicMatch(title: string, artist: string): Promise<AppleMatch> {
   const term = encodeURIComponent(`${artist} ${title}`);
   const url = `https://itunes.apple.com/search?term=${term}&entity=song&limit=15`;
   const payload = await fetchJsonWithTimeout<ITunesPayload>(url, 3500);
-  if (!payload?.results?.length) return null;
+  if (!payload?.results?.length) {
+    return { url: null, artworkUrl: null };
+  }
 
   let bestUrl: string | null = null;
+  let bestArtwork: string | null = null;
   let bestScore = 0;
   let fallbackUrl: string | null = null;
+  let fallbackArtwork: string | null = null;
 
   for (const item of payload.results) {
     const trackName = asNonEmpty(item.trackName);
     const artistName = asNonEmpty(item.artistName);
     const trackUrl = asNonEmpty(item.trackViewUrl);
+    const artworkUrl = toHiResArtwork(asNonEmpty(item.artworkUrl100));
 
     if (!trackName || !artistName || !trackUrl) continue;
     if (!fallbackUrl) fallbackUrl = trackUrl;
+    if (!fallbackArtwork) fallbackArtwork = artworkUrl;
 
     const titleScore = similarityScore(title, trackName);
     const artistScore = similarityScore(artist, artistName);
@@ -130,18 +149,19 @@ async function findAppleMusicUrl(title: string, artist: string): Promise<string 
     if (score > bestScore) {
       bestScore = score;
       bestUrl = trackUrl;
+      bestArtwork = artworkUrl;
     }
   }
 
   if (bestUrl && bestScore >= 0.72) {
-    return bestUrl;
+    return { url: bestUrl, artworkUrl: bestArtwork };
   }
 
   if (bestUrl && bestScore >= 0.56) {
-    return bestUrl;
+    return { url: bestUrl, artworkUrl: bestArtwork };
   }
 
-  return fallbackUrl;
+  return { url: fallbackUrl, artworkUrl: fallbackArtwork };
 }
 
 export async function getAutoNowPlayingFromLastFm(): Promise<AutoNowPlaying | null> {
@@ -163,12 +183,13 @@ export async function getAutoNowPlayingFromLastFm(): Promise<AutoNowPlaying | nu
 
   if (!title || !artist) return null;
 
-  const appleMusicUrl = await findAppleMusicUrl(title, artist);
+  const appleMatch = await findAppleMusicMatch(title, artist);
 
   return {
     title,
     artist,
-    appleMusicUrl,
+    appleMusicUrl: appleMatch.url,
+    artworkUrl: appleMatch.artworkUrl,
     spotifyEmbedUrl: null
   };
 }

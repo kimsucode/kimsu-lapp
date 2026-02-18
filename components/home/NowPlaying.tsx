@@ -10,6 +10,7 @@ type Props = {
   artist: string | null;
   spotifyEmbedUrl: string | null;
   appleMusicUrl?: string | null;
+  artworkUrl?: string | null;
 };
 
 type LikesPayload = {
@@ -71,7 +72,7 @@ function buildSongKey(
   return JSON.stringify(payload);
 }
 
-export function NowPlaying({ title, artist, spotifyEmbedUrl, appleMusicUrl }: Props) {
+export function NowPlaying({ title, artist, spotifyEmbedUrl, appleMusicUrl, artworkUrl }: Props) {
   const appleMusicEmbedUrl = useMemo(() => toAppleMusicEmbedUrl(appleMusicUrl), [appleMusicUrl]);
   const appleMusicLink = useMemo(() => appleMusicUrl?.trim() ?? "", [appleMusicUrl]);
   const songKey = useMemo(
@@ -195,18 +196,27 @@ export function NowPlaying({ title, artist, spotifyEmbedUrl, appleMusicUrl }: Pr
 
       {appleMusicLink ? (
         <div className="mt-3 rounded-2xl border border-borderSubtle/70 bg-gradient-to-br from-[#171828] via-[#181A2C] to-[#11111D] p-4">
-          <div className="rounded-xl border border-white/10 bg-black/20 px-3 py-2">
-            <p className="truncate text-lg font-semibold text-textPrimary">{title ?? "Morceau en cours"}</p>
-            <p className="truncate text-sm text-textSecondary">{artist ?? "Artiste inconnu"}</p>
+          <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/20 p-3">
+            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-[#1a1a24]">
+              {artworkUrl ? (
+                <img src={artworkUrl} alt={title ? `Cover ${title}` : "Cover art"} className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-textMuted">AM</div>
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-lg font-semibold text-textPrimary">{title ?? "Morceau en cours"}</p>
+              <p className="truncate text-sm text-textSecondary">{artist ?? "Artiste inconnu"}</p>
+              <a
+                href={appleMusicLink}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-2 inline-flex items-center rounded-full border border-[#ff6b9f]/45 bg-[#ff6b9f]/15 px-3 py-1.5 text-xs font-medium text-[#ffd8e6] transition-all duration-300 ease-calm hover:border-[#ff6b9f]/70 hover:bg-[#ff6b9f]/25"
+              >
+                Ouvrir dans Apple Music
+              </a>
+            </div>
           </div>
-          <a
-            href={appleMusicLink}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-3 inline-flex items-center rounded-full border border-[#ff6b9f]/45 bg-[#ff6b9f]/15 px-3 py-1.5 text-xs font-medium text-[#ffd8e6] transition-all duration-300 ease-calm hover:border-[#ff6b9f]/70 hover:bg-[#ff6b9f]/25"
-          >
-            Ouvrir dans Apple Music
-          </a>
         </div>
       ) : spotifyEmbedUrl ? (
         <div className="mt-3 overflow-hidden rounded-2xl border border-borderSubtle/70">
