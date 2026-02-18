@@ -153,6 +153,13 @@ export function NowPlaying({ title, artist, spotifyEmbedUrl }: Props) {
         </div>
       </div>
 
+      {title ? (
+        <div className="mt-3 rounded-xl border border-borderSubtle/50 bg-[#12121a] px-3 py-2">
+          <p className="truncate text-sm font-semibold text-textPrimary">{title}</p>
+          {artist ? <p className="truncate text-xs text-textSecondary">{artist}</p> : null}
+        </div>
+      ) : null}
+
       {spotifyEmbedUrl ? (
         <div className="mt-3 overflow-hidden rounded-2xl border border-borderSubtle/70">
           <iframe
@@ -166,7 +173,9 @@ export function NowPlaying({ title, artist, spotifyEmbedUrl }: Props) {
           />
         </div>
       ) : (
-        <p className="mt-3 text-sm text-textSecondary">Ajoute un lien Spotify depuis l&apos;admin.</p>
+        <p className="mt-3 text-sm text-textSecondary">
+          Morceau détecté, mais équivalent Spotify introuvable pour l&apos;instant.
+        </p>
       )}
     </section>
   );

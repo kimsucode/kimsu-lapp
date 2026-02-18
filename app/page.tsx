@@ -9,6 +9,9 @@ import { getAutoNowPlayingFromLastFm } from "@/lib/auto-now-playing";
 import { getAppSettings, getCarouselImages, getPublicImageUrl } from "@/lib/data";
 import { getLatestPostFromFeed } from "@/lib/editorial-feed";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 function buildFallbackExcerpt(title: string | null): string {
   if (title) {
     return `Nouveau sur le blog: ${title}.`;
