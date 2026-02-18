@@ -57,6 +57,7 @@ export default async function HomePage() {
         <NowPlaying
           title={autoNowPlaying?.title ?? settings?.now_playing_title ?? null}
           artist={autoNowPlaying?.artist ?? settings?.now_playing_artist ?? null}
+          appleMusicUrl={autoNowPlaying?.appleMusicUrl ?? null}
           spotifyEmbedUrl={autoNowPlaying?.spotifyEmbedUrl ?? settings?.spotify_embed_url ?? null}
         />
 

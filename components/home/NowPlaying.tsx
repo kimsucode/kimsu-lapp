@@ -9,6 +9,7 @@ type Props = {
   title: string | null;
   artist: string | null;
   spotifyEmbedUrl: string | null;
+  appleMusicUrl?: string | null;
 };
 
 type LikesPayload = {
@@ -20,24 +21,63 @@ type SongKeyPayload = {
   title: string;
   artist: string;
   spotify: string;
+  appleMusic: string;
 };
 
-function buildSongKey(title: string | null, artist: string | null, spotifyEmbedUrl: string | null): string {
+function toAppleMusicEmbedUrl(input: string | null | undefined): string | null {
+  const raw = input?.trim() ?? "";
+  if (!raw) return null;
+
+  try {
+    const url = new URL(raw);
+
+    if (url.hostname.includes("itunes.apple.com")) {
+      return null;
+    }
+
+    if (!url.hostname.includes("music.apple.com") && !url.hostname.includes("embed.music.apple.com")) {
+      return null;
+    }
+
+    const embed = new URL(url.toString());
+    embed.hostname = "embed.music.apple.com";
+
+    if (!embed.searchParams.has("app")) {
+      embed.searchParams.set("app", "music");
+    }
+
+    return embed.toString();
+  } catch {
+    return null;
+  }
+}
+
+function buildSongKey(
+  title: string | null,
+  artist: string | null,
+  spotifyEmbedUrl: string | null,
+  appleMusicEmbedUrl: string | null
+): string {
   const payload: SongKeyPayload = {
     title: title?.trim() ?? "",
     artist: artist?.trim() ?? "",
-    spotify: spotifyEmbedUrl?.trim() ?? ""
+    spotify: spotifyEmbedUrl?.trim() ?? "",
+    appleMusic: appleMusicEmbedUrl?.trim() ?? ""
   };
 
-  if (!payload.title && !payload.artist && !payload.spotify) {
+  if (!payload.title && !payload.artist && !payload.spotify && !payload.appleMusic) {
     return "";
   }
 
   return JSON.stringify(payload);
 }
 
-export function NowPlaying({ title, artist, spotifyEmbedUrl }: Props) {
-  const songKey = useMemo(() => buildSongKey(title, artist, spotifyEmbedUrl), [title, artist, spotifyEmbedUrl]);
+export function NowPlaying({ title, artist, spotifyEmbedUrl, appleMusicUrl }: Props) {
+  const appleMusicEmbedUrl = useMemo(() => toAppleMusicEmbedUrl(appleMusicUrl), [appleMusicUrl]);
+  const songKey = useMemo(
+    () => buildSongKey(title, artist, spotifyEmbedUrl, appleMusicEmbedUrl),
+    [title, artist, spotifyEmbedUrl, appleMusicEmbedUrl]
+  );
 
   const [fingerprint, setFingerprint] = useState("");
   const [likesCount, setLikesCount] = useState(0);
@@ -153,7 +193,19 @@ export function NowPlaying({ title, artist, spotifyEmbedUrl }: Props) {
         </div>
       </div>
 
-      {spotifyEmbedUrl ? (
+      {appleMusicEmbedUrl ? (
+        <div className="mt-3 overflow-hidden rounded-2xl border border-borderSubtle/70 bg-black/20 p-1">
+          <iframe
+            title="Apple Music player"
+            src={appleMusicEmbedUrl}
+            width="100%"
+            height="175"
+            loading="lazy"
+            allow="autoplay *; encrypted-media *; fullscreen *; clipboard-write"
+            className="block border-0"
+          />
+        </div>
+      ) : spotifyEmbedUrl ? (
         <div className="mt-3 overflow-hidden rounded-2xl border border-borderSubtle/70">
           <iframe
             title="Spotify player"
@@ -166,9 +218,7 @@ export function NowPlaying({ title, artist, spotifyEmbedUrl }: Props) {
           />
         </div>
       ) : (
-        <p className="mt-3 text-sm text-textSecondary">
-          Morceau détecté, mais équivalent Spotify introuvable pour l&apos;instant.
-        </p>
+        <p className="mt-3 text-sm text-textSecondary">Morceau détecté, mais aucun lecteur Apple Music/Spotify disponible.</p>
       )}
     </section>
   );

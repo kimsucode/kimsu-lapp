@@ -1,13 +1,9 @@
 import "server-only";
 
-import {
-  fetchSpotifyTitleArtist,
-  resolveAppleMusicToSpotifyEmbedUrl
-} from "@/lib/spotify";
-
 type AutoNowPlaying = {
   title: string | null;
   artist: string | null;
+  appleMusicUrl: string | null;
   spotifyEmbedUrl: string | null;
 };
 
@@ -75,13 +71,6 @@ function similarityScore(expected: string, candidate: string): number {
   if (a.includes(b) || b.includes(a)) return 0.9;
 
   return tokenCoverage(toTokenSet(a), toTokenSet(b));
-}
-
-function isStrongMatch(expectedTitle: string, expectedArtist: string, gotTitle: string, gotArtist: string): boolean {
-  const title = similarityScore(expectedTitle, gotTitle);
-  const artist = similarityScore(expectedArtist, gotArtist);
-
-  return title >= 0.7 && artist >= 0.5;
 }
 
 async function fetchJsonWithTimeout<T>(url: string, timeoutMs = 4500): Promise<T | null> {
@@ -169,25 +158,11 @@ export async function getAutoNowPlayingFromLastFm(): Promise<AutoNowPlaying | nu
   if (!title || !artist) return null;
 
   const appleMusicUrl = await findAppleMusicUrl(title, artist);
-  const rawSpotifyEmbedUrl = appleMusicUrl
-    ? await resolveAppleMusicToSpotifyEmbedUrl(appleMusicUrl)
-    : null;
-
-  let spotifyEmbedUrl: string | null = null;
-
-  if (rawSpotifyEmbedUrl) {
-    const spotifyMeta = await fetchSpotifyTitleArtist(rawSpotifyEmbedUrl);
-    const spotifyTitle = asNonEmpty(spotifyMeta.title);
-    const spotifyArtist = asNonEmpty(spotifyMeta.artist);
-
-    if (spotifyTitle && spotifyArtist && isStrongMatch(title, artist, spotifyTitle, spotifyArtist)) {
-      spotifyEmbedUrl = rawSpotifyEmbedUrl;
-    }
-  }
 
   return {
     title,
     artist,
-    spotifyEmbedUrl
+    appleMusicUrl,
+    spotifyEmbedUrl: null
   };
 }
