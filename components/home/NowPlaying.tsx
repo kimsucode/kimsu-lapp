@@ -128,10 +128,7 @@ export function NowPlaying({ title, artist, spotifyEmbedUrl }: Props) {
       style={{ animationDelay: "40ms" }}
     >
       <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <p className="text-[11px] uppercase tracking-[0.15em] text-textMuted">Now playing</p>
-          {likesCount > 0 ? <p className="text-xs text-textSecondary">{likesCount}</p> : null}
-        </div>
+        <p className="text-[11px] uppercase tracking-[0.15em] text-textMuted">Now playing</p>
 
         <div className="flex items-center gap-2">
           <button
@@ -146,6 +143,7 @@ export function NowPlaying({ title, artist, spotifyEmbedUrl }: Props) {
           >
             <Heart className={`h-3.5 w-3.5 ${likedByMe ? "fill-current" : ""}`} />
             <span>Like</span>
+            {likesCount > 0 ? <span className="ml-0.5 text-[11px] font-semibold">{likesCount}</span> : null}
           </button>
 
           <div className="inline-flex items-center gap-2 rounded-full border border-rose/35 bg-rose/12 px-2.5 py-1">

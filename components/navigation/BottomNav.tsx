@@ -4,9 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const tabs = [
-  { href: "/", label: "Home" },
-  { href: "/focus", label: "Focus" },
-  { href: "/moodboard", label: "Ton moodboard" }
+  { href: "/", label: "Home", mobileLabel: "Home" },
+  { href: "/focus", label: "Focus", mobileLabel: "Focus" },
+  { href: "/moodboard", label: "Ton moodboard", mobileLabel: "Moodboard" }
 ];
 
 function isHidden(pathname: string): boolean {
@@ -21,7 +21,7 @@ export function BottomNav() {
   }
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-borderSubtle bg-surface/95 px-4 py-3 backdrop-blur-sm">
+    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-borderSubtle bg-surface/95 px-3 py-3 backdrop-blur-sm sm:px-4">
       <div className="mx-auto grid w-full max-w-[460px] grid-cols-3 gap-1 rounded-full border border-borderSubtle/80 bg-[#14141b] p-1.5">
         {tabs.map((tab) => {
           const active = pathname === tab.href;
@@ -30,11 +30,12 @@ export function BottomNav() {
               key={tab.href}
               href={tab.href}
               className={active
-                ? "rounded-full border border-lavender/35 bg-lavender/20 px-3 py-2 text-center text-sm font-medium text-lavender shadow-[0_0_0_1px_rgba(255,255,255,0.02)] transition-colors duration-300 ease-calm"
-                : "rounded-full border border-transparent px-3 py-2 text-center text-sm text-textSecondary transition-colors duration-300 ease-calm hover:text-textPrimary"
+                ? "rounded-full border border-lavender/35 bg-lavender/20 px-2 py-2 text-center text-[0.95rem] font-medium text-lavender shadow-[0_0_0_1px_rgba(255,255,255,0.02)] transition-colors duration-300 ease-calm sm:px-3 sm:text-base"
+                : "rounded-full border border-transparent px-2 py-2 text-center text-[0.95rem] text-textSecondary transition-colors duration-300 ease-calm hover:text-textPrimary sm:px-3 sm:text-base"
               }
             >
-              {tab.label}
+              <span className="sm:hidden whitespace-nowrap">{tab.mobileLabel}</span>
+              <span className="hidden sm:inline">{tab.label}</span>
             </Link>
           );
         })}
