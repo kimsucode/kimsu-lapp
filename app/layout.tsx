@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     siteName: "Kimsu l'App",
     images: [
       {
-        url: "/opengraph-image.png",
+        url: "/og-image.png",
         width: 1200,
         height: 630,
         alt: "Kimsu logo"
@@ -50,7 +50,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Kimsu l'App",
     description: "Une app chill pour les gens chill.",
-    images: ["/opengraph-image.png"]
+    images: ["/og-image.png"]
   }
 };
 
