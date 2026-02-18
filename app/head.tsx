@@ -1,7 +1,7 @@
 export default function Head() {
   const title = "Kimsu l'App";
   const description = "Une app chill pour les gens chill.";
-  const image = "https://kimsu-lapp.vercel.app/og-image-v2.png";
+  const image = "https://kimsu-lapp.vercel.app/og-image-wa-v3.jpg";
   const url = "https://kimsu-lapp.vercel.app/";
 
   return (
