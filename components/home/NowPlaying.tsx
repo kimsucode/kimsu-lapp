@@ -55,13 +55,13 @@ function buildSongKey(
   title: string | null,
   artist: string | null,
   spotifyEmbedUrl: string | null,
-  appleMusicEmbedUrl: string | null
+  appleMusicRef: string | null
 ): string {
   const payload: SongKeyPayload = {
     title: title?.trim() ?? "",
     artist: artist?.trim() ?? "",
     spotify: spotifyEmbedUrl?.trim() ?? "",
-    appleMusic: appleMusicEmbedUrl?.trim() ?? ""
+    appleMusic: appleMusicRef?.trim() ?? ""
   };
 
   if (!payload.title && !payload.artist && !payload.spotify && !payload.appleMusic) {
@@ -73,9 +73,10 @@ function buildSongKey(
 
 export function NowPlaying({ title, artist, spotifyEmbedUrl, appleMusicUrl }: Props) {
   const appleMusicEmbedUrl = useMemo(() => toAppleMusicEmbedUrl(appleMusicUrl), [appleMusicUrl]);
+  const appleMusicLink = useMemo(() => appleMusicUrl?.trim() ?? "", [appleMusicUrl]);
   const songKey = useMemo(
-    () => buildSongKey(title, artist, spotifyEmbedUrl, appleMusicEmbedUrl),
-    [title, artist, spotifyEmbedUrl, appleMusicEmbedUrl]
+    () => buildSongKey(title, artist, spotifyEmbedUrl, appleMusicLink || appleMusicEmbedUrl),
+    [title, artist, spotifyEmbedUrl, appleMusicLink, appleMusicEmbedUrl]
   );
 
   const [fingerprint, setFingerprint] = useState("");
@@ -192,17 +193,20 @@ export function NowPlaying({ title, artist, spotifyEmbedUrl, appleMusicUrl }: Pr
         </div>
       </div>
 
-      {appleMusicEmbedUrl ? (
-        <div className="mt-3 overflow-hidden rounded-2xl border border-borderSubtle/70 bg-black/20 p-1">
-          <iframe
-            title="Apple Music player"
-            src={appleMusicEmbedUrl}
-            width="100%"
-            height="175"
-            loading="lazy"
-            allow="autoplay *; encrypted-media *; fullscreen *; clipboard-write"
-            className="block border-0"
-          />
+      {appleMusicLink ? (
+        <div className="mt-3 rounded-2xl border border-borderSubtle/70 bg-gradient-to-br from-[#171828] via-[#181A2C] to-[#11111D] p-4">
+          <div className="rounded-xl border border-white/10 bg-black/20 px-3 py-2">
+            <p className="truncate text-lg font-semibold text-textPrimary">{title ?? "Morceau en cours"}</p>
+            <p className="truncate text-sm text-textSecondary">{artist ?? "Artiste inconnu"}</p>
+          </div>
+          <a
+            href={appleMusicLink}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-3 inline-flex items-center rounded-full border border-[#ff6b9f]/45 bg-[#ff6b9f]/15 px-3 py-1.5 text-xs font-medium text-[#ffd8e6] transition-all duration-300 ease-calm hover:border-[#ff6b9f]/70 hover:bg-[#ff6b9f]/25"
+          >
+            Ouvrir dans Apple Music
+          </a>
         </div>
       ) : spotifyEmbedUrl ? (
         <div className="mt-3 overflow-hidden rounded-2xl border border-borderSubtle/70">
