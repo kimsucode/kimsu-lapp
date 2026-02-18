@@ -20,9 +20,13 @@ const cormorant = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://kimsu-lapp.vercel.app"),
   title: "Kimsu l'App",
   description: "Une app chill pour les gens chill.",
   applicationName: "KIMSU",
+  appleWebApp: {
+    title: "Kimsu"
+  },
   icons: {
     icon: "/icons/icon-192.png",
     apple: "/icons/apple-touch-icon.png"
@@ -31,13 +35,22 @@ export const metadata: Metadata = {
     title: "Kimsu l'App",
     description: "Une app chill pour les gens chill.",
     type: "website",
-    url: "https://kimsu-lapp.vercel.app",
-    siteName: "Kimsu l'App"
+    url: "/",
+    siteName: "Kimsu l'App",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1024,
+        height: 1024,
+        alt: "Kimsu logo"
+      }
+    ]
   },
   twitter: {
     card: "summary_large_image",
     title: "Kimsu l'App",
-    description: "Une app chill pour les gens chill."
+    description: "Une app chill pour les gens chill.",
+    images: ["/og-image.png"]
   }
 };
 
