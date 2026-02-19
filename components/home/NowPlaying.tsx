@@ -26,6 +26,51 @@ type SongKeyPayload = {
   appleMusic: string;
 };
 
+type CurrentNowPlayingPayload = {
+  title: string | null;
+  artist: string | null;
+  spotifyEmbedUrl: string | null;
+  appleMusicUrl: string | null;
+  artworkUrl: string | null;
+  previewUrl: string | null;
+};
+
+type NowPlayingState = {
+  title: string | null;
+  artist: string | null;
+  spotifyEmbedUrl: string | null;
+  appleMusicUrl: string | null;
+  artworkUrl: string | null;
+  previewUrl: string | null;
+};
+
+function asTrimmedOrNull(value: string | null | undefined): string | null {
+  const trimmed = value?.trim() ?? "";
+  return trimmed ? trimmed : null;
+}
+
+function normalizeTrack(input: Partial<NowPlayingState>): NowPlayingState {
+  return {
+    title: asTrimmedOrNull(input.title),
+    artist: asTrimmedOrNull(input.artist),
+    spotifyEmbedUrl: asTrimmedOrNull(input.spotifyEmbedUrl),
+    appleMusicUrl: asTrimmedOrNull(input.appleMusicUrl),
+    artworkUrl: asTrimmedOrNull(input.artworkUrl),
+    previewUrl: asTrimmedOrNull(input.previewUrl)
+  };
+}
+
+function areTracksEqual(a: NowPlayingState, b: NowPlayingState): boolean {
+  return (
+    a.title === b.title &&
+    a.artist === b.artist &&
+    a.spotifyEmbedUrl === b.spotifyEmbedUrl &&
+    a.appleMusicUrl === b.appleMusicUrl &&
+    a.artworkUrl === b.artworkUrl &&
+    a.previewUrl === b.previewUrl
+  );
+}
+
 function toAppleMusicEmbedUrl(input: string | null | undefined): string | null {
   const raw = input?.trim() ?? "";
   if (!raw) return null;
@@ -74,13 +119,85 @@ function buildSongKey(
 }
 
 export function NowPlaying({ title, artist, spotifyEmbedUrl, appleMusicUrl, artworkUrl, previewUrl }: Props) {
-  const appleMusicEmbedUrl = useMemo(() => toAppleMusicEmbedUrl(appleMusicUrl), [appleMusicUrl]);
-  const appleMusicLink = useMemo(() => appleMusicUrl?.trim() ?? "", [appleMusicUrl]);
-  const audioPreviewUrl = useMemo(() => previewUrl?.trim() ?? "", [previewUrl]);
+  const [currentTrack, setCurrentTrack] = useState<NowPlayingState>(() =>
+    normalizeTrack({
+      title,
+      artist,
+      spotifyEmbedUrl,
+      appleMusicUrl,
+      artworkUrl,
+      previewUrl
+    })
+  );
+
+  useEffect(() => {
+    const fromProps = normalizeTrack({
+      title,
+      artist,
+      spotifyEmbedUrl,
+      appleMusicUrl,
+      artworkUrl,
+      previewUrl
+    });
+
+    setCurrentTrack((prev) => (areTracksEqual(prev, fromProps) ? prev : fromProps));
+  }, [title, artist, spotifyEmbedUrl, appleMusicUrl, artworkUrl, previewUrl]);
+
+  useEffect(() => {
+    let cancelled = false;
+    let inFlight = false;
+
+    async function refreshNowPlaying() {
+      if (inFlight) return;
+      inFlight = true;
+
+      try {
+        const response = await fetch("/api/now-playing/current", {
+          method: "GET",
+          cache: "no-store"
+        });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const payload = (await response.json()) as CurrentNowPlayingPayload;
+        if (cancelled) return;
+
+        const nextTrack = normalizeTrack(payload);
+        setCurrentTrack((prev) => (areTracksEqual(prev, nextTrack) ? prev : nextTrack));
+      } catch {
+        // Keep last known track if refresh fails.
+      } finally {
+        inFlight = false;
+      }
+    }
+
+    void refreshNowPlaying();
+    const intervalId = window.setInterval(() => {
+      void refreshNowPlaying();
+    }, 20000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
+  const currentTitle = currentTrack.title;
+  const currentArtist = currentTrack.artist;
+  const currentSpotifyEmbedUrl = currentTrack.spotifyEmbedUrl;
+  const currentAppleMusicUrl = currentTrack.appleMusicUrl;
+  const currentArtworkUrl = currentTrack.artworkUrl;
+  const currentPreviewUrl = currentTrack.previewUrl;
+
+  const appleMusicEmbedUrl = useMemo(() => toAppleMusicEmbedUrl(currentAppleMusicUrl), [currentAppleMusicUrl]);
+  const appleMusicLink = useMemo(() => currentAppleMusicUrl?.trim() ?? "", [currentAppleMusicUrl]);
+  const audioPreviewUrl = useMemo(() => currentPreviewUrl?.trim() ?? "", [currentPreviewUrl]);
 
   const songKey = useMemo(
-    () => buildSongKey(title, artist, spotifyEmbedUrl, appleMusicLink || appleMusicEmbedUrl),
-    [title, artist, spotifyEmbedUrl, appleMusicLink, appleMusicEmbedUrl]
+    () => buildSongKey(currentTitle, currentArtist, currentSpotifyEmbedUrl, appleMusicLink || appleMusicEmbedUrl),
+    [currentTitle, currentArtist, currentSpotifyEmbedUrl, appleMusicLink, appleMusicEmbedUrl]
   );
 
   const [fingerprint, setFingerprint] = useState("");
@@ -162,8 +279,8 @@ export function NowPlaying({ title, artist, spotifyEmbedUrl, appleMusicUrl, artw
       },
       body: JSON.stringify({
         songKey,
-        title,
-        artist
+        title: currentTitle,
+        artist: currentArtist
       })
     }).catch(() => null);
 
@@ -228,20 +345,32 @@ export function NowPlaying({ title, artist, spotifyEmbedUrl, appleMusicUrl, artw
         </div>
       </div>
 
-      {appleMusicLink ? (
+      {currentSpotifyEmbedUrl ? (
+        <div className="mt-3 overflow-hidden rounded-2xl border border-borderSubtle/70">
+          <iframe
+            title="Spotify player"
+            src={currentSpotifyEmbedUrl}
+            width="100%"
+            height="152"
+            loading="lazy"
+            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+            className="block border-0"
+          />
+        </div>
+      ) : appleMusicLink ? (
         <div className="mt-3 rounded-2xl border border-borderSubtle/70 bg-gradient-to-br from-[#171828] via-[#181A2C] to-[#11111D] p-4">
           <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/20 p-3">
             <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-[#1a1a24]">
-              {artworkUrl ? (
-                <img src={artworkUrl} alt={title ? `Cover ${title}` : "Cover art"} className="h-full w-full object-cover" />
+              {currentArtworkUrl ? (
+                <img src={currentArtworkUrl} alt={currentTitle ? `Cover ${currentTitle}` : "Cover art"} className="h-full w-full object-cover" />
               ) : (
                 <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-textMuted">AM</div>
               )}
             </div>
 
             <div className="min-w-0 flex-1">
-              <p className="truncate text-lg font-semibold text-textPrimary">{title ?? "Morceau en cours"}</p>
-              <p className="truncate text-sm text-textSecondary">{artist ?? "Artiste inconnu"}</p>
+              <p className="truncate text-lg font-semibold text-textPrimary">{currentTitle ?? "Morceau en cours"}</p>
+              <p className="truncate text-sm text-textSecondary">{currentArtist ?? "Artiste inconnu"}</p>
 
               {audioPreviewUrl ? (
                 <div className="mt-2 flex items-center gap-2">
@@ -270,20 +399,10 @@ export function NowPlaying({ title, artist, spotifyEmbedUrl, appleMusicUrl, artw
             />
           ) : null}
         </div>
-      ) : spotifyEmbedUrl ? (
-        <div className="mt-3 overflow-hidden rounded-2xl border border-borderSubtle/70">
-          <iframe
-            title="Spotify player"
-            src={spotifyEmbedUrl}
-            width="100%"
-            height="152"
-            loading="lazy"
-            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-            className="block border-0"
-          />
-        </div>
-      ) : (
+      ) : currentTitle || currentArtist ? (
         <p className="mt-3 text-sm text-textSecondary">Morceau détecté, mais aucun lecteur Apple Music/Spotify disponible.</p>
+      ) : (
+        <p className="mt-3 text-sm text-textSecondary">Aucun morceau détecté pour le moment.</p>
       )}
     </section>
   );
