@@ -116,11 +116,11 @@ function resolveAssetUrl(path: string): string {
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const image = new Image();
-    image.crossOrigin = "anonymous";
 
     let settled = false;
     const finalizeResolve = () => {
       if (settled) return;
+      if (!image.naturalWidth || !image.naturalHeight) return;
       settled = true;
       resolve(image);
     };
@@ -137,12 +137,6 @@ function loadImage(src: string): Promise<HTMLImageElement> {
     if (image.complete && image.naturalWidth > 0) {
       finalizeResolve();
       return;
-    }
-
-    if (typeof image.decode === "function") {
-      image.decode().then(finalizeResolve).catch(() => {
-        // keep onload/onerror fallback
-      });
     }
   });
 }
@@ -173,33 +167,41 @@ function prepareLogoForSignature(logo: HTMLImageElement): HTMLCanvasElement {
 
   octx.drawImage(logo, 0, 0, offscreen.width, offscreen.height);
 
-  const imageData = octx.getImageData(0, 0, offscreen.width, offscreen.height);
-  const data = imageData.data;
+  try {
+    const imageData = octx.getImageData(0, 0, offscreen.width, offscreen.height);
+    const data = imageData.data;
 
-  for (let i = 0; i < data.length; i += 4) {
-    const r = data[i];
-    const g = data[i + 1];
-    const b = data[i + 2];
-    const a = data[i + 3];
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      const a = data[i + 3];
 
-    if (a === 0) continue;
+      if (a === 0) continue;
 
-    const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-    const alphaFromLuma = Math.max(0, Math.min(1, (luminance - 22) / 150));
+      const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      const alphaFromLuma = Math.max(0, Math.min(1, (luminance - 22) / 150));
 
-    data[i] = 242;
-    data[i + 1] = 242;
-    data[i + 2] = 247;
-    data[i + 3] = Math.round(a * alphaFromLuma);
+      data[i] = 242;
+      data[i + 1] = 242;
+      data[i + 2] = 247;
+      data[i + 3] = Math.round(a * alphaFromLuma);
+    }
+
+    octx.putImageData(imageData, 0, 0);
+  } catch {
+    // Mobile Safari can block pixel reads in some contexts; fallback to original logo render.
   }
 
-  octx.putImageData(imageData, 0, 0);
   return offscreen;
 }
 
 function drawLogoSignature(ctx: CanvasRenderingContext2D, logo: HTMLImageElement): void {
+  const cleanedLogo = prepareLogoForSignature(logo);
   const targetWidth = 200;
-  const ratio = logo.width > 0 ? logo.height / logo.width : 1;
+  const sourceWidth = cleanedLogo.width || logo.naturalWidth || logo.width || 1;
+  const sourceHeight = cleanedLogo.height || logo.naturalHeight || logo.height || 1;
+  const ratio = sourceHeight / sourceWidth;
   const targetHeight = targetWidth * ratio;
 
   const logoX = (STORY_WIDTH - targetWidth) / 2;
@@ -211,8 +213,6 @@ function drawLogoSignature(ctx: CanvasRenderingContext2D, logo: HTMLImageElement
   lineGradient.addColorStop(0, "rgba(205,189,255,0)");
   lineGradient.addColorStop(0.5, "rgba(205,189,255,0.10)");
   lineGradient.addColorStop(1, "rgba(205,189,255,0)");
-
-  const cleanedLogo = prepareLogoForSignature(logo);
 
   ctx.save();
   ctx.lineWidth = 1;
