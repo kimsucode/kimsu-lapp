@@ -287,8 +287,7 @@ export function QuoteOfTheDayCard({ quote }: Props) {
     setStatus(null);
 
     try {
-      const host = typeof window !== "undefined" ? window.location.host : "";
-      const signature = host ? `Kimsu L'app · ${host}` : "Kimsu L'app";
+      const signature = "Kimsu L'app";
       const imageBlob = await buildStoryImage(content, signature);
       setStatus("Carte prête ✨");
 
