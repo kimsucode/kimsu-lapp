@@ -10,7 +10,6 @@ const SAFE = {
 
 type RenderQuoteStoryParams = {
   quote: string;
-  brand: string;
 };
 
 type ShareOrDownloadResult = "shared" | "downloaded";
@@ -108,7 +107,127 @@ function canvasToPngBlob(canvas: HTMLCanvasElement): Promise<Blob> {
   });
 }
 
-export async function renderQuoteStoryCanvas({ quote, brand }: RenderQuoteStoryParams): Promise<Blob> {
+
+function resolveAssetUrl(path: string): string {
+  if (typeof window === "undefined") return path;
+  return new URL(path, window.location.origin).toString();
+}
+
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.crossOrigin = "anonymous";
+
+    let settled = false;
+    const finalizeResolve = () => {
+      if (settled) return;
+      settled = true;
+      resolve(image);
+    };
+    const finalizeReject = () => {
+      if (settled) return;
+      settled = true;
+      reject(new Error(`Image introuvable: ${src}`));
+    };
+
+    image.onload = finalizeResolve;
+    image.onerror = finalizeReject;
+    image.src = src;
+
+    if (image.complete && image.naturalWidth > 0) {
+      finalizeResolve();
+      return;
+    }
+
+    if (typeof image.decode === "function") {
+      image.decode().then(finalizeResolve).catch(() => {
+        // keep onload/onerror fallback
+      });
+    }
+  });
+}
+
+async function loadSignatureLogo(): Promise<HTMLImageElement | null> {
+  const candidates = ["/brand/kimsu-logo.png", "/icons/source.png"];
+
+  for (const path of candidates) {
+    const src = resolveAssetUrl(path);
+    try {
+      return await loadImage(src);
+    } catch {
+      // try next
+    }
+  }
+
+  return null;
+}
+
+
+function prepareLogoForSignature(logo: HTMLImageElement): HTMLCanvasElement {
+  const offscreen = document.createElement("canvas");
+  offscreen.width = logo.naturalWidth || logo.width;
+  offscreen.height = logo.naturalHeight || logo.height;
+
+  const octx = offscreen.getContext("2d");
+  if (!octx) return offscreen;
+
+  octx.drawImage(logo, 0, 0, offscreen.width, offscreen.height);
+
+  const imageData = octx.getImageData(0, 0, offscreen.width, offscreen.height);
+  const data = imageData.data;
+
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+    const a = data[i + 3];
+
+    if (a === 0) continue;
+
+    const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    const alphaFromLuma = Math.max(0, Math.min(1, (luminance - 22) / 150));
+
+    data[i] = 242;
+    data[i + 1] = 242;
+    data[i + 2] = 247;
+    data[i + 3] = Math.round(a * alphaFromLuma);
+  }
+
+  octx.putImageData(imageData, 0, 0);
+  return offscreen;
+}
+
+function drawLogoSignature(ctx: CanvasRenderingContext2D, logo: HTMLImageElement): void {
+  const targetWidth = 200;
+  const ratio = logo.width > 0 ? logo.height / logo.width : 1;
+  const targetHeight = targetWidth * ratio;
+
+  const logoX = (STORY_WIDTH - targetWidth) / 2;
+  const logoY = STORY_HEIGHT - 120 - targetHeight;
+
+  const hairlineY = logoY - 28;
+  const halfLine = 270;
+  const lineGradient = ctx.createLinearGradient(STORY_WIDTH / 2 - halfLine, hairlineY, STORY_WIDTH / 2 + halfLine, hairlineY);
+  lineGradient.addColorStop(0, "rgba(205,189,255,0)");
+  lineGradient.addColorStop(0.5, "rgba(205,189,255,0.10)");
+  lineGradient.addColorStop(1, "rgba(205,189,255,0)");
+
+  const cleanedLogo = prepareLogoForSignature(logo);
+
+  ctx.save();
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = lineGradient;
+  ctx.beginPath();
+  ctx.moveTo(STORY_WIDTH / 2 - halfLine, hairlineY);
+  ctx.lineTo(STORY_WIDTH / 2 + halfLine, hairlineY);
+  ctx.stroke();
+
+  ctx.globalAlpha = 0.74;
+  ctx.drawImage(cleanedLogo, logoX, logoY, targetWidth, targetHeight);
+  ctx.restore();
+}
+
+export async function renderQuoteStoryCanvas({ quote }: RenderQuoteStoryParams): Promise<Blob> {
   const canvas = document.createElement("canvas");
   canvas.width = STORY_WIDTH;
   canvas.height = STORY_HEIGHT;
@@ -136,8 +255,10 @@ export async function renderQuoteStoryCanvas({ quote, brand }: RenderQuoteStoryP
     STORY_HEIGHT * 0.53,
     780
   );
-  lavenderGlow.addColorStop(0, "rgba(205,189,255,0.14)");
-  lavenderGlow.addColorStop(0.6, "rgba(205,189,255,0.06)");
+  lavenderGlow.addColorStop(0, "rgba(205,189,255,0.15)");
+  lavenderGlow.addColorStop(0.22, "rgba(205,189,255,0.125)");
+  lavenderGlow.addColorStop(0.52, "rgba(205,189,255,0.065)");
+  lavenderGlow.addColorStop(0.78, "rgba(205,189,255,0.024)");
   lavenderGlow.addColorStop(1, "rgba(205,189,255,0)");
   ctx.fillStyle = lavenderGlow;
   ctx.fillRect(0, 0, STORY_WIDTH, STORY_HEIGHT);
@@ -157,30 +278,34 @@ export async function renderQuoteStoryCanvas({ quote, brand }: RenderQuoteStoryP
 
   drawGrain(ctx);
 
-  const pillText = "Phrase du jour";
-  ctx.font = "600 38px 'DM Sans', sans-serif";
+
+  const badgeText = "Phrase du jour";
+  const badgeY = SAFE.top + 60;
+  const badgeHalfLine = 210;
+
+  ctx.font = "700 34px 'DM Sans', sans-serif";
   ctx.textAlign = "center";
+  ctx.fillStyle = "rgba(222,214,245,0.72)";
+  ctx.fillText(badgeText, STORY_WIDTH / 2, badgeY);
 
-  const pillPaddingX = 36;
-  const pillHeight = 72;
-  const pillRadius = 36;
-  const pillWidth = ctx.measureText(pillText).width + pillPaddingX * 2;
-  const pillX = STORY_WIDTH / 2 - pillWidth / 2;
-  const pillY = SAFE.top + 20;
+  const badgeLineY = badgeY + 24;
+  const badgeLineGradient = ctx.createLinearGradient(
+    STORY_WIDTH / 2 - badgeHalfLine,
+    badgeLineY,
+    STORY_WIDTH / 2 + badgeHalfLine,
+    badgeLineY
+  );
+  badgeLineGradient.addColorStop(0, "rgba(205,189,255,0)");
+  badgeLineGradient.addColorStop(0.5, "rgba(205,189,255,0.12)");
+  badgeLineGradient.addColorStop(1, "rgba(205,189,255,0)");
 
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = badgeLineGradient;
   ctx.beginPath();
-  ctx.roundRect(pillX, pillY, pillWidth, pillHeight, pillRadius);
-  ctx.fillStyle = "rgba(205,189,255,0.10)";
-  ctx.fill();
-  ctx.strokeStyle = "rgba(205,189,255,0.30)";
-  ctx.lineWidth = 2;
+  ctx.moveTo(STORY_WIDTH / 2 - badgeHalfLine, badgeLineY);
+  ctx.lineTo(STORY_WIDTH / 2 + badgeHalfLine, badgeLineY);
   ctx.stroke();
-
-  ctx.fillStyle = "rgba(222,214,245,0.90)";
-  ctx.letterSpacing = "0.08em";
-  ctx.fillText(pillText, STORY_WIDTH / 2, pillY + 47);
-
-  const quoteMaxWidth = 760;
+  const quoteMaxWidth = 672;
   const quoteMaxHeight = 760;
   const quoteCenterY = STORY_HEIGHT * 0.53;
   const quoteSafeWidth = Math.min(quoteMaxWidth, STORY_WIDTH - SAFE.left - SAFE.right);
@@ -204,18 +329,10 @@ export async function renderQuoteStoryCanvas({ quote, brand }: RenderQuoteStoryP
   ctx.shadowColor = "transparent";
   ctx.shadowBlur = 0;
 
-  const hairlineY = STORY_HEIGHT - SAFE.bottom - 76;
-  ctx.strokeStyle = "rgba(242,242,247,0.10)";
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(STORY_WIDTH / 2 - 180, hairlineY);
-  ctx.lineTo(STORY_WIDTH / 2 + 180, hairlineY);
-  ctx.stroke();
-
-  ctx.font = "500 34px 'DM Sans', sans-serif";
-  ctx.fillStyle = "rgba(242,242,247,0.76)";
-  ctx.textAlign = "center";
-  ctx.fillText(brand, STORY_WIDTH / 2, STORY_HEIGHT - 120);
+  const logo = await loadSignatureLogo();
+  if (logo) {
+    drawLogoSignature(ctx, logo);
+  }
 
   return canvasToPngBlob(canvas);
 }
