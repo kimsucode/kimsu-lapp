@@ -4,7 +4,7 @@ import { Heart, Image as ImageIcon, Loader2, Share2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { getOrCreateFingerprint } from "@/lib/client/fingerprint";
-import { STORY_CARD_LAYOUT } from "@/lib/client/story-card-layout";
+import { renderQuoteStoryCanvas, shareOrDownloadImage } from "@/lib/client/quote-story";
 
 type Props = {
   quote: string | null;
@@ -15,9 +15,6 @@ type LikesPayload = {
   likedByMe: boolean;
 };
 
-const STORY_WIDTH = STORY_CARD_LAYOUT.canvas.width;
-const STORY_HEIGHT = STORY_CARD_LAYOUT.canvas.height;
-
 function formatLikes(count: number): string {
   if (count <= 1) {
     return `Aimée par ${count} personne`;
@@ -26,122 +23,12 @@ function formatLikes(count: number): string {
   return `Aimée par ${count} personnes`;
 }
 
-function wrapLines(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
-  const words = text.split(/\s+/).filter(Boolean);
-  const lines: string[] = [];
-  let current = "";
-
-  for (const word of words) {
-    const candidate = current ? `${current} ${word}` : word;
-    if (ctx.measureText(candidate).width <= maxWidth) {
-      current = candidate;
-      continue;
-    }
-
-    if (current) {
-      lines.push(current);
-    }
-    current = word;
-  }
-
-  if (current) {
-    lines.push(current);
-  }
-
-  return lines.slice(0, 10);
-}
-
-function canShareFiles(file: File): boolean {
-  if (typeof navigator === "undefined") return false;
-  if (typeof navigator.share !== "function") return false;
-  if (typeof navigator.canShare !== "function") return false;
-
-  return navigator.canShare({ files: [file] });
-}
-
 async function logShareEvent(quote: string, channel: "share-sheet" | "story-image" | "copy-link"): Promise<void> {
   await fetch("/api/quote/share-event", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ quote, channel })
   }).catch(() => undefined);
-}
-
-async function buildStoryImage(quote: string, signature: string): Promise<Blob> {
-  const canvas = document.createElement("canvas");
-  canvas.width = STORY_WIDTH;
-  canvas.height = STORY_HEIGHT;
-
-  const ctx = canvas.getContext("2d");
-  if (!ctx) {
-    throw new Error("Canvas indisponible");
-  }
-
-  const gradient = ctx.createLinearGradient(0, 0, 0, STORY_HEIGHT);
-  gradient.addColorStop(0, STORY_CARD_LAYOUT.background.top);
-  gradient.addColorStop(0.55, STORY_CARD_LAYOUT.background.middle);
-  gradient.addColorStop(1, STORY_CARD_LAYOUT.background.bottom);
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, STORY_WIDTH, STORY_HEIGHT);
-
-  const halo = ctx.createRadialGradient(
-    STORY_WIDTH * STORY_CARD_LAYOUT.halo.centerXRatio,
-    STORY_HEIGHT * STORY_CARD_LAYOUT.halo.centerYRatio,
-    STORY_CARD_LAYOUT.halo.innerRadius,
-    STORY_WIDTH * STORY_CARD_LAYOUT.halo.centerXRatio,
-    STORY_HEIGHT * STORY_CARD_LAYOUT.halo.centerYRatio,
-    STORY_CARD_LAYOUT.halo.outerRadius
-  );
-  halo.addColorStop(0, STORY_CARD_LAYOUT.halo.innerColor);
-  halo.addColorStop(1, STORY_CARD_LAYOUT.halo.outerColor);
-  ctx.fillStyle = halo;
-  ctx.fillRect(0, 0, STORY_WIDTH, STORY_HEIGHT);
-
-  ctx.font = STORY_CARD_LAYOUT.badge.font;
-  ctx.textAlign = "center";
-
-  const badgeText = STORY_CARD_LAYOUT.badge.text;
-  const badgeTextWidth = ctx.measureText(badgeText).width;
-  const badgePaddingX = STORY_CARD_LAYOUT.badge.paddingX;
-  const badgeHeight = STORY_CARD_LAYOUT.badge.height;
-  const badgeWidth = badgeTextWidth + badgePaddingX * 2;
-  const badgeX = STORY_WIDTH / 2 - badgeWidth / 2;
-  const badgeY = STORY_CARD_LAYOUT.badge.y;
-  const badgeRadius = STORY_CARD_LAYOUT.badge.radius;
-
-  ctx.beginPath();
-  ctx.roundRect(badgeX, badgeY, badgeWidth, badgeHeight, badgeRadius);
-  ctx.fillStyle = STORY_CARD_LAYOUT.badge.fillColor;
-  ctx.fill();
-  ctx.strokeStyle = STORY_CARD_LAYOUT.badge.borderColor;
-  ctx.lineWidth = STORY_CARD_LAYOUT.badge.borderWidth;
-  ctx.stroke();
-
-  ctx.fillStyle = STORY_CARD_LAYOUT.badge.textColor;
-  ctx.fillText(badgeText, STORY_WIDTH / 2, STORY_CARD_LAYOUT.badge.textY);
-
-  ctx.fillStyle = STORY_CARD_LAYOUT.quote.color;
-  ctx.font = STORY_CARD_LAYOUT.quote.font;
-
-  const lines = wrapLines(ctx, quote, STORY_WIDTH - STORY_CARD_LAYOUT.quote.maxWidthPadding);
-  const lineHeight = STORY_CARD_LAYOUT.quote.lineHeight;
-  const quoteBlockHeight = lines.length * lineHeight;
-  const startY = STORY_HEIGHT * STORY_CARD_LAYOUT.quote.centerYRatio - quoteBlockHeight / 2;
-
-  lines.forEach((line, index) => {
-    ctx.fillText(line, STORY_WIDTH / 2, startY + index * lineHeight);
-  });
-
-  ctx.fillStyle = STORY_CARD_LAYOUT.signature.color;
-  ctx.font = STORY_CARD_LAYOUT.signature.font;
-  ctx.fillText(signature, STORY_WIDTH / 2, STORY_HEIGHT - STORY_CARD_LAYOUT.signature.yOffsetFromBottom);
-
-  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob((result) => resolve(result), "image/png"));
-  if (!blob) {
-    throw new Error("Impossible de générer l'image");
-  }
-
-  return blob;
 }
 
 export function QuoteOfTheDayCard({ quote }: Props) {
@@ -287,33 +174,18 @@ export function QuoteOfTheDayCard({ quote }: Props) {
     setStatus(null);
 
     try {
-      const signature = "Kimsu L'app";
-      const imageBlob = await buildStoryImage(content, signature);
-      setStatus("Carte prête ✨");
+      const imageBlob = await renderQuoteStoryCanvas({ quote: content, brand: "Kimsu L'app" });
+      const file = new File([imageBlob], "phrase-du-jour.png", { type: "image/png" });
 
-      const file = new File([imageBlob], "phrase-du-jour-story.png", { type: "image/png" });
-
-      if (canShareFiles(file)) {
-        await navigator.share({
-          title: "Phrase du jour",
-          text: content,
-          files: [file]
-        });
-        await logShareEvent(content, "story-image");
-        return;
-      }
-
-      const objectUrl = URL.createObjectURL(imageBlob);
-      const anchor = document.createElement("a");
-      anchor.href = objectUrl;
-      anchor.download = "phrase-du-jour-story.png";
-      document.body.append(anchor);
-      anchor.click();
-      anchor.remove();
-      URL.revokeObjectURL(objectUrl);
-
-      setStatus("Carte prête ✨ Image téléchargée pour story.");
+      const result = await shareOrDownloadImage(file, {
+        title: "Phrase du jour",
+        text: content
+      });
       await logShareEvent(content, "story-image");
+
+      if (result === "downloaded") {
+        setStatus("Image prête ✧ Télécharge-la et ajoute-la en story.");
+      }
     } catch {
       setStatus("Impossible de générer la story pour le moment.");
     } finally {
@@ -372,7 +244,7 @@ export function QuoteOfTheDayCard({ quote }: Props) {
             className="inline-flex items-center gap-1.5 rounded-full border border-borderSubtle bg-[#191922] px-3 py-2 text-xs text-textSecondary transition-all duration-300 ease-calm hover:-translate-y-0.5 hover:border-lavender/35 hover:text-lavender hover:shadow-[0_0_12px_rgba(205,189,255,0.16)] active:scale-[0.98] disabled:opacity-70"
           >
             {isGeneratingStory ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImageIcon className="h-3.5 w-3.5" />}
-            <span>Story</span>
+            <span>{isGeneratingStory ? "Generating..." : "Story"}</span>
           </button>
         </div>
 
