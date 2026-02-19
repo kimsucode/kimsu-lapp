@@ -243,8 +243,8 @@ export function NowPlaying({ title, artist, spotifyEmbedUrl, appleMusicUrl, artw
               <p className="truncate text-lg font-semibold text-textPrimary">{title ?? "Morceau en cours"}</p>
               <p className="truncate text-sm text-textSecondary">{artist ?? "Artiste inconnu"}</p>
 
-              <div className="mt-2 flex items-center gap-2">
-                {audioPreviewUrl ? (
+              {audioPreviewUrl ? (
+                <div className="mt-2 flex items-center gap-2">
                   <button
                     type="button"
                     onClick={onTogglePreview}
@@ -254,17 +254,8 @@ export function NowPlaying({ title, artist, spotifyEmbedUrl, appleMusicUrl, artw
                     {isPreviewPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
                     <span>{isPreviewPlaying ? "Pause" : "Écouter"}</span>
                   </button>
-                ) : null}
-
-                <a
-                  href={appleMusicLink}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center rounded-full border border-[#ff6b9f]/45 bg-[#ff6b9f]/15 px-3 py-1.5 text-xs font-medium text-[#ffd8e6] transition-all duration-300 ease-calm hover:border-[#ff6b9f]/70 hover:bg-[#ff6b9f]/25"
-                >
-                  Ouvrir dans Apple Music
-                </a>
-              </div>
+                </div>
+              ) : null}
             </div>
           </div>
 
