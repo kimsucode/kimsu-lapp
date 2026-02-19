@@ -51,7 +51,7 @@ function fitQuote(
   let fontSize = 80;
 
   while (fontSize >= 54) {
-    ctx.font = `italic 600 ${fontSize}px 'Cormorant Garamond', Georgia, serif`;
+    ctx.font = `italic 600 ${fontSize}px 'Cormorant Garamond', serif`;
     const lines = wrapLines(ctx, quote, maxWidth);
     const lineHeight = Math.round(fontSize * 1.55);
     const totalHeight = lines.length * lineHeight;
@@ -63,7 +63,7 @@ function fitQuote(
     fontSize -= 2;
   }
 
-  ctx.font = "italic 600 54px 'Cormorant Garamond', Georgia, serif";
+  ctx.font = "italic 600 54px 'Cormorant Garamond', serif";
   const lines = wrapLines(ctx, quote, maxWidth).slice(0, 8);
   return { fontSize: 54, lineHeight: Math.round(54 * 1.55), lines };
 }
@@ -157,8 +157,8 @@ export async function renderQuoteStoryCanvas({ quote, brand }: RenderQuoteStoryP
 
   drawGrain(ctx);
 
-  const pillText = "✧ Phrase du jour";
-  ctx.font = "600 38px 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif";
+  const pillText = "Phrase du jour";
+  ctx.font = "600 38px 'DM Sans', sans-serif";
   ctx.textAlign = "center";
 
   const pillPaddingX = 36;
@@ -186,7 +186,7 @@ export async function renderQuoteStoryCanvas({ quote, brand }: RenderQuoteStoryP
   const quoteSafeWidth = Math.min(quoteMaxWidth, STORY_WIDTH - SAFE.left - SAFE.right);
 
   const fitted = fitQuote(ctx, quote, quoteSafeWidth, quoteMaxHeight);
-  ctx.font = `italic 600 ${fitted.fontSize}px 'Cormorant Garamond', Georgia, serif`;
+  ctx.font = `italic 600 ${fitted.fontSize}px 'Cormorant Garamond', serif`;
   ctx.fillStyle = "#F2F2F7";
   ctx.textAlign = "center";
   ctx.shadowColor = "rgba(5,5,8,0.30)";
@@ -212,7 +212,7 @@ export async function renderQuoteStoryCanvas({ quote, brand }: RenderQuoteStoryP
   ctx.lineTo(STORY_WIDTH / 2 + 180, hairlineY);
   ctx.stroke();
 
-  ctx.font = "500 34px 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif";
+  ctx.font = "500 34px 'DM Sans', sans-serif";
   ctx.fillStyle = "rgba(242,242,247,0.76)";
   ctx.textAlign = "center";
   ctx.fillText(brand, STORY_WIDTH / 2, STORY_HEIGHT - 120);
