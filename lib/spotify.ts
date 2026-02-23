@@ -56,6 +56,65 @@ function isAppleMusicUrl(input: string): boolean {
   }
 }
 
+function normalizeAppleMusicUrl(input: string): string {
+  try {
+    const url = new URL(input);
+
+    if (url.hostname.includes("itunes.apple.com")) {
+      url.hostname = "music.apple.com";
+    }
+
+    if (!url.searchParams.has("i")) {
+      url.search = "";
+    }
+
+    return url.toString();
+  } catch {
+    return input;
+  }
+}
+
+async function fetchSongLinkSpotifyUrl(targetUrl: string): Promise<string | null> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5500);
+
+  try {
+    const response = await fetch(`https://api.song.link/v1-alpha.1/links?url=${encodeURIComponent(targetUrl)}`, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        "User-Agent": "kimsu-lapp/1.0 (+https://kimsu-lapp.vercel.app)"
+      },
+      cache: "no-store",
+      signal: controller.signal
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const payload = (await response.json()) as SongLinkPayload;
+    return payload.linksByPlatform?.spotify?.url?.trim() || null;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function resolveViaSongLinkWithRetries(targetUrl: string): Promise<string | null> {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const url = await fetchSongLinkSpotifyUrl(targetUrl);
+    if (url) return url;
+
+    if (attempt < 2) {
+      await new Promise((resolve) => setTimeout(resolve, 250 * (attempt + 1)));
+    }
+  }
+
+  return null;
+}
+
 export function toSpotifyEmbedUrl(input: string | null | undefined): string | null {
   if (!input) return null;
 
@@ -115,23 +174,18 @@ export async function resolveAppleMusicToSpotifyEmbedUrl(input: string | null | 
   if (!raw) return null;
   if (!isAppleMusicUrl(raw)) return null;
 
-  try {
-    const response = await fetch(`https://api.song.link/v1-alpha.1/links?url=${encodeURIComponent(raw)}`, {
-      method: "GET",
-      headers: { Accept: "application/json" },
-      cache: "no-store"
-    });
+  const normalized = normalizeAppleMusicUrl(raw);
+  const candidates = normalized !== raw ? [raw, normalized] : [raw];
 
-    if (!response.ok) return null;
+  for (const candidate of candidates) {
+    const spotifyUrl = await resolveViaSongLinkWithRetries(candidate);
+    if (!spotifyUrl) continue;
 
-    const payload = (await response.json()) as SongLinkPayload;
-    const spotifyUrl = payload.linksByPlatform?.spotify?.url;
-    if (!spotifyUrl) return null;
-
-    return toSpotifyEmbedUrl(spotifyUrl);
-  } catch {
-    return null;
+    const embed = toSpotifyEmbedUrl(spotifyUrl);
+    if (embed) return embed;
   }
+
+  return null;
 }
 
 export function parseSpotifyUrls(input: string | null | undefined): ParsedSpotify | null {

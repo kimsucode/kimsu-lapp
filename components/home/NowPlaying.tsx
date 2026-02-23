@@ -165,7 +165,19 @@ export function NowPlaying({ title, artist, spotifyEmbedUrl, appleMusicUrl, artw
         if (cancelled) return;
 
         const nextTrack = normalizeTrack(payload);
-        setCurrentTrack((prev) => (areTracksEqual(prev, nextTrack) ? prev : nextTrack));
+        setCurrentTrack((prev) => {
+          const shouldKeepSpotify =
+            prev.spotifyEmbedUrl &&
+            !nextTrack.spotifyEmbedUrl &&
+            prev.title === nextTrack.title &&
+            prev.artist === nextTrack.artist;
+
+          const mergedTrack = shouldKeepSpotify
+            ? { ...nextTrack, spotifyEmbedUrl: prev.spotifyEmbedUrl }
+            : nextTrack;
+
+          return areTracksEqual(prev, mergedTrack) ? prev : mergedTrack;
+        });
       } catch {
         // Keep last known track if refresh fails.
       } finally {
