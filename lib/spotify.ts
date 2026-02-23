@@ -74,16 +74,28 @@ function normalizeAppleMusicUrl(input: string): string {
   }
 }
 
-async function fetchSongLinkSpotifyUrl(targetUrl: string): Promise<string | null> {
+function extractAppleSongId(input: string): string | null {
+  try {
+    const url = new URL(input);
+    const songId = url.searchParams.get("i")?.trim() ?? "";
+    if (/^\d+$/.test(songId)) {
+      return songId;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchSongLinkSpotifyUrlFromEndpoint(endpoint: string): Promise<string | null> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 5500);
 
   try {
-    const response = await fetch(`https://api.song.link/v1-alpha.1/links?url=${encodeURIComponent(targetUrl)}`, {
+    const response = await fetch(endpoint, {
       method: "GET",
       headers: {
-        Accept: "application/json",
-        "User-Agent": "kimsu-lapp/1.0 (+https://kimsu-lapp.vercel.app)"
+        Accept: "application/json"
       },
       cache: "no-store",
       signal: controller.signal
@@ -102,9 +114,34 @@ async function fetchSongLinkSpotifyUrl(targetUrl: string): Promise<string | null
   }
 }
 
+async function fetchSongLinkSpotifyUrl(targetUrl: string): Promise<string | null> {
+  return fetchSongLinkSpotifyUrlFromEndpoint(
+    `https://api.song.link/v1-alpha.1/links?url=${encodeURIComponent(targetUrl)}`
+  );
+}
+
+async function fetchSongLinkSpotifyUrlByAppleId(songId: string): Promise<string | null> {
+  return fetchSongLinkSpotifyUrlFromEndpoint(
+    `https://api.song.link/v1-alpha.1/links?platform=appleMusic&type=song&id=${encodeURIComponent(songId)}`
+  );
+}
+
 async function resolveViaSongLinkWithRetries(targetUrl: string): Promise<string | null> {
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const url = await fetchSongLinkSpotifyUrl(targetUrl);
+    if (url) return url;
+
+    if (attempt < 2) {
+      await new Promise((resolve) => setTimeout(resolve, 250 * (attempt + 1)));
+    }
+  }
+
+  return null;
+}
+
+async function resolveViaSongLinkByAppleIdWithRetries(songId: string): Promise<string | null> {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const url = await fetchSongLinkSpotifyUrlByAppleId(songId);
     if (url) return url;
 
     if (attempt < 2) {
@@ -183,6 +220,15 @@ export async function resolveAppleMusicToSpotifyEmbedUrl(input: string | null | 
 
     const embed = toSpotifyEmbedUrl(spotifyUrl);
     if (embed) return embed;
+  }
+
+  const appleSongId = extractAppleSongId(raw) ?? extractAppleSongId(normalized);
+  if (appleSongId) {
+    const spotifyUrl = await resolveViaSongLinkByAppleIdWithRetries(appleSongId);
+    if (spotifyUrl) {
+      const embed = toSpotifyEmbedUrl(spotifyUrl);
+      if (embed) return embed;
+    }
   }
 
   return null;
