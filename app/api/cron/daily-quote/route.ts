@@ -12,12 +12,36 @@ function isAuthorized(request: NextRequest) {
   return authorization === `Bearer ${secret}`;
 }
 
+function getParisHour(date = new Date()): number | null {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Paris",
+    hour: "2-digit",
+    hourCycle: "h23"
+  }).formatToParts(date);
+
+  const hour = parts.find((part) => part.type === "hour")?.value;
+  if (!hour) return null;
+
+  const parsed = Number(hour);
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
 export async function GET(request: NextRequest) {
   if (!isAuthorized(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
+    const parisHour = getParisHour();
+
+    if (parisHour !== 0) {
+      return NextResponse.json({
+        status: "skipped",
+        reason: "Hors fenêtre minuit Europe/Paris.",
+        parisHour
+      });
+    }
+
     const result = await generateNextQuoteOfDay();
 
     revalidatePath("/");
