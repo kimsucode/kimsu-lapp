@@ -174,8 +174,8 @@ export function QuoteOfTheDayCard({ quote }: Props) {
     setStatus(null);
 
     try {
-      const imageBlob = await renderQuoteStoryCanvas({ quote: content, brand: "Kimsu L'app" });
-      const file = new File([imageBlob], "phrase-du-jour.png", { type: "image/png" });
+      const imageBlob = await renderQuoteStoryCanvas({ quote: content });
+      const file = new File([imageBlob], "phrase-du-jour-by-kimsu.png", { type: "image/png" });
 
       const result = await shareOrDownloadImage(file, {
         title: "Phrase du jour",
@@ -195,11 +195,11 @@ export function QuoteOfTheDayCard({ quote }: Props) {
 
   return (
     <section
-      className="animate-fadeCalm relative overflow-hidden rounded-[22px] border border-lavender/20 bg-[radial-gradient(circle_at_50%_30%,rgba(232,225,255,0.12)_0%,rgba(205,189,255,0.08)_30%,rgba(205,189,255,0.02)_56%,transparent_74%),radial-gradient(circle_at_48%_34%,rgba(205,189,255,0.15)_0%,transparent_62%),linear-gradient(180deg,#1A1724_0%,#17171F_100%)] px-5 py-8 shadow-quote transition-all duration-300 ease-calm"
+      className="animate-fadeCalm relative overflow-hidden rounded-[22px] border border-lavender/20 bg-[radial-gradient(ellipse_at_50%_52%,rgba(232,225,255,0.15)_0%,rgba(205,189,255,0.09)_34%,rgba(205,189,255,0.034)_58%,transparent_78%),radial-gradient(ellipse_at_50%_38%,rgba(205,189,255,0.045)_0%,rgba(205,189,255,0.018)_30%,transparent_56%),radial-gradient(ellipse_at_50%_68%,rgba(205,189,255,0.065)_0%,rgba(205,189,255,0.03)_34%,transparent_62%),linear-gradient(180deg,#1A1724_0%,#17171F_100%)] px-5 py-8 shadow-quote transition-all duration-300 ease-calm"
       style={{ animationDelay: "90ms" }}
     >
       <div
-        className={`pointer-events-none absolute inset-0 rounded-[22px] bg-[radial-gradient(circle_at_50%_36%,rgba(205,189,255,0.2)_0%,rgba(205,189,255,0.04)_38%,transparent_72%)] transition-opacity duration-300 ${firstLikeGlow ? "opacity-100" : "opacity-0"}`}
+        className={`pointer-events-none absolute inset-0 rounded-[22px] bg-[radial-gradient(ellipse_at_50%_52%,rgba(205,189,255,0.20)_0%,rgba(205,189,255,0.065)_34%,transparent_70%)] transition-opacity duration-300 ${firstLikeGlow ? "opacity-100" : "opacity-0"}`}
       />
 
       <div className="relative flex justify-center"><span className="inline-flex rounded-full border border-lavender/35 bg-lavender/12 px-3 py-1 text-[11px] tracking-[0.08em] text-lavender">Phrase du jour</span></div>
@@ -220,7 +220,7 @@ export function QuoteOfTheDayCard({ quote }: Props) {
             disabled={isTogglingLike || loadingLikes}
             className={likedByMe
               ? `inline-flex items-center gap-1.5 rounded-full border border-lavender/45 bg-lavender/20 px-3 py-2 text-xs text-lavender transition-all duration-300 ease-calm hover:-translate-y-0.5 hover:shadow-[0_0_16px_rgba(205,189,255,0.22)] active:scale-[0.98] ${likePop ? "scale-105 shadow-[0_0_18px_rgba(205,189,255,0.28)]" : ""}`
-              : "inline-flex items-center gap-1.5 rounded-full border border-borderSubtle bg-[#191922] px-3 py-2 text-xs text-textSecondary transition-all duration-300 ease-calm hover:-translate-y-0.5 hover:border-lavender/35 hover:text-lavender hover:shadow-[0_0_12px_rgba(205,189,255,0.16)] active:scale-[0.98] disabled:opacity-70"
+              : "inline-flex items-center gap-1.5 rounded-full border border-borderSubtle bg-[#191922] px-3 py-2 text-xs text-textSecondary transition-all duration-300 ease-calm hover:-translate-y-0.5 hover:border-lavender/35 hover:text-lavender hover:shadow-[0_0_12px_rgba(205,189,255,0.20)] active:scale-[0.98] disabled:opacity-70"
             }
             aria-label={likedByMe ? "Retirer le like" : "Aimer la phrase"}
           >
@@ -231,7 +231,7 @@ export function QuoteOfTheDayCard({ quote }: Props) {
           <button
             type="button"
             onClick={onShare}
-            className="inline-flex items-center gap-1.5 rounded-full border border-borderSubtle bg-[#191922] px-3 py-2 text-xs text-textSecondary transition-all duration-300 ease-calm hover:-translate-y-0.5 hover:border-lavender/35 hover:text-lavender hover:shadow-[0_0_12px_rgba(205,189,255,0.16)] active:scale-[0.98]"
+            className="inline-flex items-center gap-1.5 rounded-full border border-borderSubtle bg-[#191922] px-3 py-2 text-xs text-textSecondary transition-all duration-300 ease-calm hover:-translate-y-0.5 hover:border-lavender/35 hover:text-lavender hover:shadow-[0_0_12px_rgba(205,189,255,0.20)] active:scale-[0.98]"
           >
             <Share2 className="h-3.5 w-3.5" />
             <span>Share</span>
@@ -241,7 +241,7 @@ export function QuoteOfTheDayCard({ quote }: Props) {
             type="button"
             onClick={onStory}
             disabled={isGeneratingStory}
-            className="inline-flex items-center gap-1.5 rounded-full border border-borderSubtle bg-[#191922] px-3 py-2 text-xs text-textSecondary transition-all duration-300 ease-calm hover:-translate-y-0.5 hover:border-lavender/35 hover:text-lavender hover:shadow-[0_0_12px_rgba(205,189,255,0.16)] active:scale-[0.98] disabled:opacity-70"
+            className="inline-flex items-center gap-1.5 rounded-full border border-borderSubtle bg-[#191922] px-3 py-2 text-xs text-textSecondary transition-all duration-300 ease-calm hover:-translate-y-0.5 hover:border-lavender/35 hover:text-lavender hover:shadow-[0_0_12px_rgba(205,189,255,0.20)] active:scale-[0.98] disabled:opacity-70"
           >
             {isGeneratingStory ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImageIcon className="h-3.5 w-3.5" />}
             <span>{isGeneratingStory ? "Generating..." : "Story"}</span>
