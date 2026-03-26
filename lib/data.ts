@@ -1,11 +1,14 @@
 import { parisDayISO } from "@/lib/date";
 import { getSupabaseServerClient } from "@/lib/supabase-server";
-import type { AppSettings, CarouselImage, FocusAudioTrack, Moment, SavedPhrase } from "@/types/content";
+import type { AppSettings, CarouselImage, DailyPhrase, FocusAudioTrack, Moment, SavedPhrase } from "@/types/content";
 
 function isMissingAppSettingsColumn(message: string): boolean {
   return (
     message.includes("column") &&
-    (message.includes("editorial_feed_url") || message.includes("section_order"))
+    (message.includes("editorial_feed_url") ||
+      message.includes("section_order") ||
+      message.includes("quote_of_day_mode") ||
+      message.includes("quote_of_day_updated_at"))
   );
 }
 
@@ -15,7 +18,7 @@ export async function getAppSettings(): Promise<AppSettings | null> {
   const primary = await supabase
     .from("app_settings")
     .select(
-      "id, now_playing_title, now_playing_artist, spotify_embed_url, quote_of_day, latest_article_url, editorial_feed_url, section_order, updated_at"
+      "id, now_playing_title, now_playing_artist, spotify_embed_url, quote_of_day, quote_of_day_mode, quote_of_day_updated_at, latest_article_url, editorial_feed_url, section_order, updated_at"
     )
     .eq("id", 1)
     .maybeSingle();
@@ -44,9 +47,26 @@ export async function getAppSettings(): Promise<AppSettings | null> {
 
   return {
     ...fallback.data,
+    quote_of_day_mode: null,
+    quote_of_day_updated_at: null,
     editorial_feed_url: null,
     section_order: null
   };
+}
+
+export async function getDailyPhrases(): Promise<DailyPhrase[]> {
+  const supabase = getSupabaseServerClient();
+
+  const { data, error } = await supabase
+    .from("daily_phrases")
+    .select("id, phrase, is_active, last_used_at, times_used, created_at, updated_at")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(`Failed to load daily phrases: ${error.message}`);
+  }
+
+  return data ?? [];
 }
 
 export async function getCarouselImages(): Promise<CarouselImage[]> {

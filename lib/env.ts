@@ -20,3 +20,9 @@ export function getSupabaseEnv() {
     SUPABASE_SERVICE_ROLE_KEY: getRequiredEnv("SUPABASE_SERVICE_ROLE_KEY")
   };
 }
+
+export function getCronEnv() {
+  return {
+    CRON_SECRET: getRequiredEnv("CRON_SECRET")
+  };
+}

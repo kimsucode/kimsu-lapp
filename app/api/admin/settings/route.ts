@@ -1,9 +1,11 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
+import { getAppSettings } from "@/lib/data";
 import { normalizeHomeSectionOrder } from "@/lib/sections";
 import { resolveAppleMusicToSpotifyEmbedUrl, toSpotifyEmbedUrl } from "@/lib/spotify";
 import { getSupabaseServerClient } from "@/lib/supabase-server";
+import type { QuotePublicationMode } from "@/types/content";
 
 type SettingsPayload = {
   now_playing_title?: string;
@@ -11,6 +13,7 @@ type SettingsPayload = {
   spotify_embed_url?: string;
   apple_music_url?: string;
   quote_of_day?: string;
+  quote_of_day_mode?: QuotePublicationMode;
   latest_article_url?: string;
   editorial_feed_url?: string;
   section_order?: unknown;
@@ -34,50 +37,67 @@ function normalizeFeedUrl(value: string | null): string | null {
 
 export async function POST(request: NextRequest) {
   const body = (await request.json()) as SettingsPayload;
+  const currentSettings = await getAppSettings();
 
-  const rawSpotify = asNullable(body.spotify_embed_url);
-  const rawAppleMusic = asNullable(body.apple_music_url);
+  const hasSpotify = Object.prototype.hasOwnProperty.call(body, "spotify_embed_url");
+  const hasAppleMusic = Object.prototype.hasOwnProperty.call(body, "apple_music_url");
+  const hasQuote = Object.prototype.hasOwnProperty.call(body, "quote_of_day");
+  const hasQuoteMode = Object.prototype.hasOwnProperty.call(body, "quote_of_day_mode");
+  const hasLatestArticle = Object.prototype.hasOwnProperty.call(body, "latest_article_url");
+  const hasEditorialFeed = Object.prototype.hasOwnProperty.call(body, "editorial_feed_url");
+  const hasSectionOrder = Object.prototype.hasOwnProperty.call(body, "section_order");
+  const hasNowPlayingTitle = Object.prototype.hasOwnProperty.call(body, "now_playing_title");
+  const hasNowPlayingArtist = Object.prototype.hasOwnProperty.call(body, "now_playing_artist");
 
+  const rawSpotify = hasSpotify ? asNullable(body.spotify_embed_url) : currentSettings?.spotify_embed_url ?? null;
+  const rawAppleMusic = hasAppleMusic ? asNullable(body.apple_music_url) : null;
   const parsedSpotify = rawSpotify ? toSpotifyEmbedUrl(rawSpotify) : null;
-  let spotifyEmbedUrl = parsedSpotify;
+  let spotifyEmbedUrl = parsedSpotify ?? rawSpotify;
 
-  if (!spotifyEmbedUrl && rawAppleMusic) {
+  if (hasAppleMusic && !spotifyEmbedUrl && rawAppleMusic) {
     spotifyEmbedUrl = await resolveAppleMusicToSpotifyEmbedUrl(rawAppleMusic);
   }
 
-  if (rawSpotify && !parsedSpotify && !rawAppleMusic) {
+  if (hasSpotify && rawSpotify && !parsedSpotify && !rawAppleMusic) {
     return NextResponse.json(
       { error: "Lien Spotify invalide. Utilise un lien track/album/playlist Spotify." },
       { status: 400 }
     );
   }
 
-  if (rawAppleMusic && !spotifyEmbedUrl && !parsedSpotify) {
+  if (hasAppleMusic && rawAppleMusic && !spotifyEmbedUrl && !parsedSpotify) {
     return NextResponse.json(
       { error: "Impossible de convertir ce lien Apple Music vers Spotify. Vérifie l'URL puis réessaie." },
       { status: 400 }
     );
   }
 
-  const rawFeedUrl = asNullable(body.editorial_feed_url);
+  const rawFeedUrl = hasEditorialFeed ? asNullable(body.editorial_feed_url) : currentSettings?.editorial_feed_url ?? null;
   const editorialFeedUrl = normalizeFeedUrl(rawFeedUrl);
 
-  if (rawFeedUrl && !editorialFeedUrl) {
+  if (hasEditorialFeed && rawFeedUrl && !editorialFeedUrl) {
     return NextResponse.json({ error: "URL de flux invalide (utilise http(s))." }, { status: 400 });
   }
 
-  const sectionOrder = normalizeHomeSectionOrder(body.section_order);
+  const sectionOrder = hasSectionOrder
+    ? normalizeHomeSectionOrder(body.section_order)
+    : normalizeHomeSectionOrder(currentSettings?.section_order);
 
   const supabase = getSupabaseServerClient();
+  const nextQuote = hasQuote ? asNullable(body.quote_of_day) : currentSettings?.quote_of_day ?? null;
+  const quoteMode = hasQuoteMode ? body.quote_of_day_mode ?? "manual" : currentSettings?.quote_of_day_mode ?? "manual";
+  const quoteUpdatedAt = hasQuote || hasQuoteMode ? new Date().toISOString() : currentSettings?.quote_of_day_updated_at ?? null;
 
   const { error } = await supabase.from("app_settings").upsert(
     {
       id: 1,
-      now_playing_title: asNullable(body.now_playing_title),
-      now_playing_artist: asNullable(body.now_playing_artist),
+      now_playing_title: hasNowPlayingTitle ? asNullable(body.now_playing_title) : currentSettings?.now_playing_title ?? null,
+      now_playing_artist: hasNowPlayingArtist ? asNullable(body.now_playing_artist) : currentSettings?.now_playing_artist ?? null,
       spotify_embed_url: spotifyEmbedUrl,
-      quote_of_day: asNullable(body.quote_of_day),
-      latest_article_url: asNullable(body.latest_article_url),
+      quote_of_day: nextQuote,
+      quote_of_day_mode: quoteMode,
+      quote_of_day_updated_at: quoteUpdatedAt,
+      latest_article_url: hasLatestArticle ? asNullable(body.latest_article_url) : currentSettings?.latest_article_url ?? null,
       editorial_feed_url: editorialFeedUrl,
       section_order: sectionOrder,
       updated_at: new Date().toISOString()
@@ -86,11 +106,16 @@ export async function POST(request: NextRequest) {
   );
 
   if (error) {
-    if (error.message.includes("section_order") || error.message.includes("editorial_feed_url")) {
+    if (
+      error.message.includes("section_order") ||
+      error.message.includes("editorial_feed_url") ||
+      error.message.includes("quote_of_day_mode") ||
+      error.message.includes("quote_of_day_updated_at")
+    ) {
       return NextResponse.json(
         {
           error:
-            "Colonne manquante dans Supabase (section_order/editorial_feed_url). Exécute les migrations SQL dans supabase/migrations."
+            "Colonne manquante dans Supabase (section_order/editorial_feed_url/quote_of_day_mode). Exécute les migrations SQL dans supabase/migrations."
         },
         { status: 500 }
       );

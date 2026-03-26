@@ -1,4 +1,5 @@
 export type HomeSectionKey = "now_playing" | "carousel" | "quote" | "latest_article";
+export type QuotePublicationMode = "manual" | "auto";
 
 export type AppSettings = {
   id: number;
@@ -6,6 +7,8 @@ export type AppSettings = {
   now_playing_artist: string | null;
   spotify_embed_url: string | null;
   quote_of_day: string | null;
+  quote_of_day_mode: QuotePublicationMode | null;
+  quote_of_day_updated_at: string | null;
   latest_article_url: string | null;
   editorial_feed_url: string | null;
   section_order: HomeSectionKey[] | null;
@@ -44,4 +47,14 @@ export type SavedPhrase = {
   id: string;
   phrase: string;
   created_at: string;
+};
+
+export type DailyPhrase = {
+  id: string;
+  phrase: string;
+  is_active: boolean;
+  last_used_at: string | null;
+  times_used: number;
+  created_at: string;
+  updated_at: string;
 };
