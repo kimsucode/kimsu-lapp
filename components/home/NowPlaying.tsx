@@ -1,6 +1,6 @@
 "use client";
 
-import { Heart, Pause, Play } from "lucide-react";
+import { Heart, Music2, Pause, Play } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { getOrCreateFingerprint } from "@/lib/client/fingerprint";
@@ -375,7 +375,7 @@ export function NowPlaying({ title, artist, spotifyEmbedUrl, appleMusicUrl, artw
               {currentArtworkUrl ? (
                 <img src={currentArtworkUrl} alt={currentTitle ? `Cover ${currentTitle}` : "Cover art"} className="h-full w-full object-cover" />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-textMuted">AM</div>
+                <div className="flex h-full w-full items-center justify-center text-textMuted"><Music2 className="h-6 w-6" /></div>
               )}
             </div>
 
