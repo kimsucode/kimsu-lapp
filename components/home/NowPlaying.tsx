@@ -1,7 +1,7 @@
 "use client";
 
-import { Heart, Pause, Play } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Heart } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 import { getOrCreateFingerprint } from "@/lib/client/fingerprint";
 
@@ -69,33 +69,6 @@ function areTracksEqual(a: NowPlayingState, b: NowPlayingState): boolean {
     a.artworkUrl === b.artworkUrl &&
     a.previewUrl === b.previewUrl
   );
-}
-
-function toAppleMusicEmbedUrl(input: string | null | undefined): string | null {
-  const raw = input?.trim() ?? "";
-  if (!raw) return null;
-
-  try {
-    const url = new URL(raw);
-    if (url.hostname.includes("itunes.apple.com")) {
-      url.hostname = "music.apple.com";
-    }
-
-    if (!url.hostname.includes("music.apple.com") && !url.hostname.includes("embed.music.apple.com")) {
-      return null;
-    }
-
-    const embed = new URL(url.toString());
-    embed.hostname = "embed.music.apple.com";
-
-    if (!embed.searchParams.has("app")) {
-      embed.searchParams.set("app", "music");
-    }
-
-    return embed.toString();
-  } catch {
-    return null;
-  }
 }
 
 function buildSongKey(
@@ -200,16 +173,11 @@ export function NowPlaying({ title, artist, spotifyEmbedUrl, appleMusicUrl, artw
   const currentArtist = currentTrack.artist;
   const currentSpotifyEmbedUrl = currentTrack.spotifyEmbedUrl;
   const currentAppleMusicUrl = currentTrack.appleMusicUrl;
-  const currentArtworkUrl = currentTrack.artworkUrl;
-  const currentPreviewUrl = currentTrack.previewUrl;
-
-  const appleMusicEmbedUrl = useMemo(() => toAppleMusicEmbedUrl(currentAppleMusicUrl), [currentAppleMusicUrl]);
   const appleMusicLink = useMemo(() => currentAppleMusicUrl?.trim() ?? "", [currentAppleMusicUrl]);
-  const audioPreviewUrl = useMemo(() => currentPreviewUrl?.trim() ?? "", [currentPreviewUrl]);
 
   const songKey = useMemo(
-    () => buildSongKey(currentTitle, currentArtist, currentSpotifyEmbedUrl, appleMusicLink || appleMusicEmbedUrl),
-    [currentTitle, currentArtist, currentSpotifyEmbedUrl, appleMusicLink, appleMusicEmbedUrl]
+    () => buildSongKey(currentTitle, currentArtist, currentSpotifyEmbedUrl, appleMusicLink),
+    [currentTitle, currentArtist, currentSpotifyEmbedUrl, appleMusicLink]
   );
 
   const [fingerprint, setFingerprint] = useState("");
@@ -217,9 +185,6 @@ export function NowPlaying({ title, artist, spotifyEmbedUrl, appleMusicUrl, artw
   const [likedByMe, setLikedByMe] = useState(false);
   const [loadingLikes, setLoadingLikes] = useState(true);
   const [isTogglingLike, setIsTogglingLike] = useState(false);
-
-  const [isPreviewPlaying, setIsPreviewPlaying] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     setFingerprint(getOrCreateFingerprint());
@@ -259,17 +224,6 @@ export function NowPlaying({ title, artist, spotifyEmbedUrl, appleMusicUrl, artw
     };
   }, [songKey, fingerprint]);
 
-  useEffect(() => {
-    if (!audioPreviewUrl || !audioRef.current) {
-      setIsPreviewPlaying(false);
-      return;
-    }
-
-    audioRef.current.pause();
-    audioRef.current.currentTime = 0;
-    setIsPreviewPlaying(false);
-  }, [audioPreviewUrl, songKey]);
-
   async function onToggleLike() {
     if (!songKey || !fingerprint || isTogglingLike || loadingLikes) return;
 
@@ -307,23 +261,6 @@ export function NowPlaying({ title, artist, spotifyEmbedUrl, appleMusicUrl, artw
     setLikedByMe(payload.likedByMe);
     setLikesCount(payload.count);
     setIsTogglingLike(false);
-  }
-
-  async function onTogglePreview() {
-    if (!audioRef.current || !audioPreviewUrl) return;
-
-    if (isPreviewPlaying) {
-      audioRef.current.pause();
-      setIsPreviewPlaying(false);
-      return;
-    }
-
-    try {
-      await audioRef.current.play();
-      setIsPreviewPlaying(true);
-    } catch {
-      setIsPreviewPlaying(false);
-    }
   }
 
   return (
@@ -368,48 +305,6 @@ export function NowPlaying({ title, artist, spotifyEmbedUrl, appleMusicUrl, artw
             allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
             className="block border-0"
           />
-        </div>
-      ) : appleMusicLink ? (
-        <div className="mt-3 rounded-2xl border border-borderSubtle/70 bg-gradient-to-br from-[#171828] via-[#181A2C] to-[#11111D] p-4">
-          <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/20 p-3">
-            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-[#1a1a24]">
-              {currentArtworkUrl ? (
-                <img src={currentArtworkUrl} alt={currentTitle ? `Cover ${currentTitle}` : "Cover art"} className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-textMuted">AM</div>
-              )}
-            </div>
-
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-lg font-semibold text-textPrimary">{currentTitle ?? "Morceau en cours"}</p>
-              <p className="truncate text-sm text-textSecondary">{currentArtist ?? "Artiste inconnu"}</p>
-
-              {audioPreviewUrl ? (
-                <div className="mt-2 flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={onTogglePreview}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-lavender/45 bg-lavender/20 px-3 py-1.5 text-xs font-medium text-lavender transition-all duration-300 ease-calm hover:border-lavender/70 hover:bg-lavender/30"
-                    aria-label={isPreviewPlaying ? "Mettre en pause l'extrait" : "Lire l'extrait"}
-                  >
-                    {isPreviewPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
-                    <span>{isPreviewPlaying ? "Pause" : "Écouter"}</span>
-                  </button>
-                </div>
-              ) : null}
-            </div>
-          </div>
-
-          {audioPreviewUrl ? (
-            <audio
-              ref={audioRef}
-              src={audioPreviewUrl}
-              preload="none"
-              onPause={() => setIsPreviewPlaying(false)}
-              onEnded={() => setIsPreviewPlaying(false)}
-              className="hidden"
-            />
-          ) : null}
         </div>
       ) : currentTitle || currentArtist ? (
         <p className="mt-3 text-sm text-textSecondary">Morceau détecté, mais aucun lecteur Apple Music/Spotify disponible.</p>

@@ -114,7 +114,7 @@ function ImageLikeButton({ imageId }: { imageId: string }) {
 export function Carousel({ images }: Props) {
   return (
     <section className="animate-fadeCalm rounded-soft border border-borderSubtle bg-surface px-4 py-4 shadow-soft transition-all duration-300 ease-calm" style={{ animationDelay: "140ms" }}>
-      <p className="text-[11px] uppercase tracking-[0.15em] text-textMuted">Atmosphere</p>
+      <p className="text-[11px] uppercase tracking-[0.15em] text-textMuted">Mood</p>
 
       {images.length ? (
         <div className="mt-3 -mr-2 flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1 pr-2">
