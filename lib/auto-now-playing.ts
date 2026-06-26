@@ -1,5 +1,7 @@
 import "server-only";
 
+import { resolveAppleMusicToSpotifyEmbedUrl } from "@/lib/spotify";
+
 type AutoNowPlaying = {
   title: string | null;
   artist: string | null;
@@ -194,6 +196,7 @@ export async function getAutoNowPlayingFromLastFm(): Promise<AutoNowPlaying | nu
   if (!title || !artist) return null;
 
   const appleMatch = await findAppleMusicMatch(title, artist);
+  const spotifyEmbedUrl = await resolveAppleMusicToSpotifyEmbedUrl(appleMatch.url);
 
   return {
     title,
@@ -201,6 +204,6 @@ export async function getAutoNowPlayingFromLastFm(): Promise<AutoNowPlaying | nu
     appleMusicUrl: appleMatch.url,
     artworkUrl: appleMatch.artworkUrl,
     previewUrl: appleMatch.previewUrl,
-    spotifyEmbedUrl: null
+    spotifyEmbedUrl
   };
 }
